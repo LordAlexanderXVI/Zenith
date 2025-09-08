@@ -8,13 +8,15 @@
 body {
     font-family: 'Inter', sans-serif;
     color: white;
-
-
+    
     background-color: #1a1a1a; /* Fallback color */
     transition: background-image 1s ease-in-out; /* Smooth transition for the new image */
 
-    /* This creates a dark overlay for better text readability */
-    /* and also helps us center the content */
+    /* --- FIXES ARE HERE --- */
+    **background-size: cover;** /* Scales the image to cover the entire screen */
+    **background-repeat: no-repeat;** /* Prevents the image from tiling */
+    
+    background-position: center;
     display: flex;
     flex-direction: column;
     justify-content: center;
