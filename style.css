@@ -26,21 +26,13 @@ main {
     user-select: none;
 }
 
-#time {
-    font-size: 8rem;
-    font-weight: 700;
+#time, #date, #greeting {
+    pointer-events: none; /* Make sure dashboard text doesn't interfere with note dragging */
 }
 
-#date {
-    font-size: 1.5rem;
-}
-
-#greeting {
-    font-size: 2.5rem;
-    margin-top: 1rem;
-}
-
-/* --- Button and Note Styles --- */
+#time { font-size: 8rem; font-weight: 700; }
+#date { font-size: 1.5rem; }
+#greeting { font-size: 2.5rem; margin-top: 1rem; }
 
 #add-note-btn {
     position: fixed;
@@ -60,9 +52,7 @@ main {
     z-index: 10;
 }
 
-#add-note-btn:hover {
-    transform: scale(1.1);
-}
+#add-note-btn:hover { transform: scale(1.1); }
 
 #notes-container {
     position: absolute;
@@ -73,6 +63,7 @@ main {
     z-index: 1;
 }
 
+/* --- Sticky Note Structure --- */
 .sticky-note {
     position: absolute;
     top: 30px;
@@ -81,20 +72,46 @@ main {
     height: 250px;
     background-color: #ffc;
     box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-    padding: 1rem;
-    color: #333; /* Sets the typing color to dark grey */
-    cursor: move;
+    display: flex;
+    flex-direction: column;
+    resize: both; /* Enables native browser resizing */
+    overflow: hidden; /* Important for resizing */
+    min-width: 150px; /* Prevent resizing too small */
+    min-height: 100px;
+}
+
+/* --- Note Header --- */
+.note-header {
+    width: 100%;
+    height: 25px;
+    background-color: #f9c900;
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    padding: 0 5px;
+    cursor: move; /* Drag cursor only on the header */
+}
+
+.note-controls button {
+    background: none;
+    border: none;
+    color: #333;
+    cursor: pointer;
+    font-size: 0.9rem;
+    margin-left: 5px;
+    opacity: 0.7;
+    transition: opacity 0.2s;
+}
+
+.note-controls button:hover { opacity: 1; }
+
+/* --- Note Content Area --- */
+.note-content {
+    flex-grow: 1; /* Makes the content area fill the remaining space */
+    padding: 10px;
+    color: #333;
     font-size: 1rem;
-    overflow-wrap: break-word; /* Helps long words wrap correctly */
-}
-
-/* NEW: Removes the default outline when typing in a note */
-.sticky-note:focus {
-    outline: none;
-}
-
-/* NEW: Styles for the placeholder text */
-.sticky-note .placeholder {
-    color: #999;
-    pointer-events: none; /* Allows clicks to go "through" to the note */
+    overflow-wrap: break-word;
+    overflow-y: auto; /* Add a scrollbar if content is too long */
+    outline: none; /* Removes outline when typing */
 }
