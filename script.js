@@ -5,6 +5,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const greetingElement = document.getElementById('greeting');
     const addNoteBtn = document.getElementById('add-note-btn');
     const notesContainer = document.getElementById('notes-container');
+    // Color map for converting hex to rgb
+    const HEX_TO_RGB = { '#ffc': '255,255,204', '#cfc': '204,255,204', '#ccf': '204,204,255', '#fcc': '255,204,204', '#cff': '204,255,255', '#fcf': '255,204,255' };
 
     // --- Dashboard Functions ---
     // (These functions remain the same)
@@ -54,7 +56,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 height: note.style.height,
                 content: note.querySelector('.note-content').innerHTML,
                 isMinimized: note.classList.contains('minimized'),
-                color: note.style.backgroundColor // Save the color
+                color: note.style.backgroundColor
             });
         });
         localStorage.setItem('stickyNotes', JSON.stringify(notes));
@@ -70,7 +72,7 @@ document.addEventListener('DOMContentLoaded', () => {
         note.classList.add('sticky-note');
         if (data.isMinimized) note.classList.add('minimized');
         note.id = data.id || `note-${Date.now()}`;
-        note.style.backgroundColor = data.color || '#ffc'; // Set color from saved data
+        note.style.backgroundColor = data.color || 'rgba(255, 255, 204, 1)';
 
         note.innerHTML = `
             <div class="note-header">
@@ -84,6 +86,10 @@ document.addEventListener('DOMContentLoaded', () => {
             <div class="note-settings-panel">
                 <div class="color-swatches">
                     <span>Color:</span>
+                </div>
+                <div class="alpha-slider-container">
+                    <span>Alpha:</span>
+                    <input type="range" class="alpha-slider" min="0.1" max="1" step="0.05">
                 </div>
             </div>
             <div class="note-content" contenteditable="true"></div>
@@ -103,7 +109,14 @@ document.addEventListener('DOMContentLoaded', () => {
         const minimizeBtn = note.querySelector('.note-minimize');
         const settingsBtn = note.querySelector('.note-settings');
         const settingsPanel = note.querySelector('.note-settings-panel');
+        const alphaSlider = note.querySelector('.alpha-slider');
         
+        // Helper to extract RGBA values from a color string
+        const getRgba = (colorStr) => colorStr.match(/(\d+(\.\d+)?)/g).map(Number);
+        
+        // Set initial slider value
+        alphaSlider.value = getRgba(note.style.backgroundColor)[3] || 1;
+
         const updateTitle = () => {
             const firstLine = content.innerText.split('\n')[0];
             title.textContent = firstLine.substring(0, 20) || 'New Note';
@@ -131,17 +144,25 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         // Create color swatches
-        const colors = ['#ffc', '#cfc', '#ccf', '#fcc', '#cff', '#fcf'];
+        const colors = Object.keys(HEX_TO_RGB);
         const swatchesContainer = note.querySelector('.color-swatches');
-        colors.forEach(color => {
+        colors.forEach(hexColor => {
             const swatch = document.createElement('div');
             swatch.classList.add('color-swatch');
-            swatch.style.backgroundColor = color;
+            swatch.style.backgroundColor = hexColor;
             swatch.addEventListener('click', () => {
-                note.style.backgroundColor = color;
+                const currentAlpha = alphaSlider.value;
+                note.style.backgroundColor = `rgba(${HEX_TO_RGB[hexColor]}, ${currentAlpha})`;
                 saveNotes();
             });
             swatchesContainer.appendChild(swatch);
+        });
+        
+        // Alpha slider functionality
+        alphaSlider.addEventListener('input', () => {
+            const [r, g, b] = getRgba(note.style.backgroundColor);
+            note.style.backgroundColor = `rgba(${r}, ${g}, ${b}, ${alphaSlider.value})`;
+            saveNotes();
         });
         
         note.addEventListener('mouseup', saveNotes);
