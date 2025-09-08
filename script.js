@@ -53,7 +53,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 width: note.style.width,
                 height: note.style.height,
                 content: note.querySelector('.note-content').innerHTML,
-                isMinimized: note.classList.contains('minimized') // Save minimized state
+                isMinimized: note.classList.contains('minimized'),
+                color: note.style.backgroundColor // Save the color
             });
         });
         localStorage.setItem('stickyNotes', JSON.stringify(notes));
@@ -67,10 +68,9 @@ document.addEventListener('DOMContentLoaded', () => {
     function createNote(data = {}) {
         const note = document.createElement('div');
         note.classList.add('sticky-note');
-        if (data.isMinimized) { // Restore minimized state on load
-            note.classList.add('minimized');
-        }
+        if (data.isMinimized) note.classList.add('minimized');
         note.id = data.id || `note-${Date.now()}`;
+        note.style.backgroundColor = data.color || '#ffc'; // Set color from saved data
 
         note.innerHTML = `
             <div class="note-header">
@@ -81,16 +81,18 @@ document.addEventListener('DOMContentLoaded', () => {
                     <button class="note-close" title="Close"><i class="fa-solid fa-xmark"></i></button>
                 </div>
             </div>
+            <div class="note-settings-panel">
+                <div class="color-swatches">
+                    <span>Color:</span>
+                </div>
+            </div>
             <div class="note-content" contenteditable="true"></div>
         `;
 
         note.style.left = data.left || `${Math.floor(Math.random() * 50 + 20)}px`;
         note.style.top = data.top || `${Math.floor(Math.random() * 50 + 20)}px`;
         note.style.width = data.width || '250px';
-        // Only restore height if not minimized, otherwise CSS handles it
-        if (!data.isMinimized) {
-            note.style.height = data.height || '250px';
-        }
+        note.style.height = data.height || '250px';
         
         const content = note.querySelector('.note-content');
         content.innerHTML = data.content || '';
@@ -98,7 +100,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const header = note.querySelector('.note-header');
         const title = note.querySelector('.note-title');
         const closeBtn = note.querySelector('.note-close');
-        const minimizeBtn = note.querySelector('.note-minimize'); // Get the minimize button
+        const minimizeBtn = note.querySelector('.note-minimize');
+        const settingsBtn = note.querySelector('.note-settings');
+        const settingsPanel = note.querySelector('.note-settings-panel');
         
         const updateTitle = () => {
             const firstLine = content.innerText.split('\n')[0];
@@ -117,24 +121,31 @@ document.addEventListener('DOMContentLoaded', () => {
             saveNotes();
         });
         
-        // NEW: Event listener for the minimize button
         minimizeBtn.addEventListener('click', () => {
             note.classList.toggle('minimized');
-            // If we're restoring the note, re-apply the saved height
-            if (!note.classList.contains('minimized')) {
-                note.style.height = data.height || '250px';
-            }
             saveNotes();
         });
 
-        new ResizeObserver(() => {
-            // Only save size if not minimized
-            if (!note.classList.contains('minimized')) {
-                data.height = note.style.height; // Update height data for restoring
-                saveNotes();
-            }
-        }).observe(note);
+        settingsBtn.addEventListener('click', () => {
+            settingsPanel.classList.toggle('active');
+        });
 
+        // Create color swatches
+        const colors = ['#ffc', '#cfc', '#ccf', '#fcc', '#cff', '#fcf'];
+        const swatchesContainer = note.querySelector('.color-swatches');
+        colors.forEach(color => {
+            const swatch = document.createElement('div');
+            swatch.classList.add('color-swatch');
+            swatch.style.backgroundColor = color;
+            swatch.addEventListener('click', () => {
+                note.style.backgroundColor = color;
+                saveNotes();
+            });
+            swatchesContainer.appendChild(swatch);
+        });
+        
+        note.addEventListener('mouseup', saveNotes);
+        
         notesContainer.appendChild(note);
         updateTitle();
     }
@@ -166,7 +177,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     addNoteBtn.addEventListener('click', () => createNote());
 
-    // --- Initial Application Setup ---
     function init() {
         updateTime();
         updateDate();
