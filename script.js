@@ -5,27 +5,35 @@ document.addEventListener('DOMContentLoaded', () => {
     const dateElement = document.getElementById('date');
     const greetingElement = document.getElementById('greeting');
 
-    // --- NEW: Function to fetch and set a background via the official Unsplash API ---
+    // Function to fetch and set a background via the official Unsplash API
     function setBackgroundImage() {
-        // !! IMPORTANT: Paste your Unsplash Access Key here
+        // !! IMPORTANT: Make sure your Unsplash Access Key is pasted here
         const apiKey = '6LTNce4u8PGdcfFJljsRPPcb2Q-0oyea8b9FKC66BrQ';
         const apiUrl = `https://api.unsplash.com/photos/random?query=nature,new-zealand&orientation=landscape&client_id=${apiKey}`;
 
+        // Step 1: Fetch the random image data
         fetch(apiUrl)
             .then(response => {
                 if (!response.ok) {
-                    throw new Error('Network response was not ok');
+                    throw new Error(`API request failed with status ${response.status}`);
                 }
-                return response.json(); // Convert the response to JSON
+                return response.json();
             })
             .then(data => {
-                // Get the image URL from the JSON data. 'regular' is a good size.
+                // Set the background image using the URL from the response
                 const imageUrl = data.urls.regular;
                 document.body.style.backgroundImage = `url('${imageUrl}')`;
+
+                // Step 2 (CRUCIAL): Notify Unsplash of the download for API compliance
+                // This second fetch call sends the required confirmation.
+                fetch(data.links.download_location, {
+                    headers: {
+                        'Authorization': `Client-ID ${apiKey}`
+                    }
+                });
             })
             .catch(error => {
                 console.error('Error fetching Unsplash image:', error);
-                // Optional: Set a default background if the API fails
                 document.body.style.backgroundColor = '#1a1a1a';
             });
     }
@@ -33,7 +41,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Function to update the time every second
     function updateTime() {
         const now = new Date();
-        timeElement.textContent = now.toLocaleTimeString('en-NZ');
+        timeElement.textContent = now.toLocaleTimeString('en-NZ', { hour12: true });
     }
 
     // Function to set the date
