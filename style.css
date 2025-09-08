@@ -1,0 +1,40 @@
+/* Basic Reset */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Inter', sans-serif;
+    color: white;
+
+    /* Background Image */
+    background-image: url('https://images.unsplash.com/photo-1596726233816-16922a2a5a54?auto=format&fit=crop&q=80&w=2070');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+
+    /* This creates a dark overlay for better text readability */
+    /* and also helps us center the content */
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+#time {
+    font-size: 8rem; /* 8 times the base font size */
+    font-weight: 700;
+}
+
+#date {
+    font-size: 1.5rem;
+}
+
+#greeting {
+    font-size: 2.5rem;
+    margin-top: 1rem;
+}
