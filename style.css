@@ -8,25 +8,26 @@
 body {
     font-family: 'Inter', sans-serif;
     color: white;
-    
-    background-color: #1a1a1a; /* Fallback color */
-    transition: background-image 1s ease-in-out; /* Smooth transition for the new image */
-
-    /* These are the crucial lines for the background */
+    background-color: #1a1a1a;
+    transition: background-image 1s ease-in-out;
     background-size: cover;
     background-repeat: no-repeat;
     background-position: center center;
+    overflow: hidden; /* Prevent scrollbars from appearing when notes are dragged */
+}
 
+main {
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
     height: 100vh;
     text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+    user-select: none; /* Prevent text selection of the dashboard elements */
 }
 
 #time {
-    font-size: 8rem; /* 8 times the base font size */
+    font-size: 8rem;
     font-weight: 700;
 }
 
@@ -39,53 +40,45 @@ body {
     margin-top: 1rem;
 }
 
-/* --- To-Do List Styles --- */
-#todo-container {
-    margin-top: 2rem;
-    width: 100%;
-    max-width: 450px; /* Limits the width on larger screens */
-    text-align: center;
-}
+/* --- New Button and Note Styles --- */
 
-#todo-title {
-    font-size: 1.5rem;
-    font-weight: 400;
-}
-
-#todo-list {
-    list-style: none; /* Removes the default bullet points */
-    padding: 0;
-    margin-top: 1rem;
-    font-size: 1.2rem;
-}
-
-/* This is a single task item in the list */
-.todo-item {
-    padding: 0.5rem 0;
-    cursor: pointer;
-    user-select: none; /* Prevents text selection on click */
-    transition: opacity 0.3s ease;
-}
-
-.todo-item.completed {
-    text-decoration: line-through;
-    opacity: 0.5;
-}
-
-#todo-input {
-    width: 100%;
-    padding: 0.5rem;
-    margin-top: 1rem;
-    font-size: 1rem;
-    font-family: 'Inter', sans-serif;
-    color: white;
-    background-color: rgba(0, 0, 0, 0.4); /* Semi-transparent black */
+#add-note-btn {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background-color: rgba(255, 255, 255, 0.9);
+    color: #1a1a1a;
     border: none;
-    border-bottom: 2px solid white; /* Underline effect */
-    outline: none; /* Removes the browser's default focus outline */
-    text-align: center;
+    font-size: 2rem;
+    font-weight: bold;
+    cursor: pointer;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    transition: transform 0.2s ease;
 }
 
-#todo-input::placeholder {
-    color: rgba(255, 255, 255, 0.7);
+#add-note-btn:hover {
+    transform: scale(1.1);
+}
+
+#notes-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+}
+
+.sticky-note {
+    position: absolute;
+    top: 30px;
+    left: 30px;
+    width: 250px;
+    height: 250px;
+    background-color: #ffc; /* Classic sticky note yellow */
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    padding: 1rem;
+    color: #333;
 }
