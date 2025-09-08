@@ -13,7 +13,7 @@ body {
     background-size: cover;
     background-repeat: no-repeat;
     background-position: center center;
-    overflow: hidden; /* Prevent scrollbars from appearing when notes are dragged */
+    overflow: hidden;
 }
 
 main {
@@ -23,7 +23,7 @@ main {
     align-items: center;
     height: 100vh;
     text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
-    user-select: none; /* Prevent text selection of the dashboard elements */
+    user-select: none;
 }
 
 #time {
@@ -40,7 +40,7 @@ main {
     margin-top: 1rem;
 }
 
-/* --- New Button and Note Styles --- */
+/* --- Button and Note Styles --- */
 
 #add-note-btn {
     position: fixed;
@@ -82,6 +82,19 @@ main {
     background-color: #ffc;
     box-shadow: 0 5px 15px rgba(0,0,0,0.3);
     padding: 1rem;
-    color: #333;
-    cursor: move; /* <<< THIS IS THE NEW LINE */
+    color: #333; /* Sets the typing color to dark grey */
+    cursor: move;
+    font-size: 1rem;
+    overflow-wrap: break-word; /* Helps long words wrap correctly */
+}
+
+/* NEW: Removes the default outline when typing in a note */
+.sticky-note:focus {
+    outline: none;
+}
+
+/* NEW: Styles for the placeholder text */
+.sticky-note .placeholder {
+    color: #999;
+    pointer-events: none; /* Allows clicks to go "through" to the note */
 }
