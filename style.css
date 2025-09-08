@@ -87,11 +87,11 @@ main {
     height: 25px;
     background-color: #f9c900;
     display: flex;
-    justify-content: space-between; /* Pushes title and controls apart */
+    justify-content: space-between;
     align-items: center;
     padding: 0 5px;
     cursor: move;
-    flex-shrink: 0; /* Prevents header from shrinking */
+    flex-shrink: 0;
 }
 
 .note-title {
@@ -99,7 +99,7 @@ main {
     color: #333;
     white-space: nowrap;
     overflow: hidden;
-    text-overflow: ellipsis; /* Adds "..." if title is too long */
+    text-overflow: ellipsis;
 }
 
 .note-controls button {
@@ -126,9 +126,9 @@ main {
     outline: none;
 }
 
-/* --- NEW: Minimized State --- */
+/* --- Minimized State --- */
 .sticky-note.minimized {
-    height: 25px; /* Shrink to header height */
+    height: 25px !important; /* <<< THIS IS THE FIX */
     min-height: 25px;
-    resize: none; /* Disable resizing when minimized */
+    resize: none;
 }
