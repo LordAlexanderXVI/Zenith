@@ -85,7 +85,7 @@ main {
 .note-header {
     width: 100%;
     height: 25px;
-    background-color: rgba(0,0,0,0.1); /* Make header slightly darker than note body */
+    background-color: rgba(0,0,0,0.1);
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -133,21 +133,25 @@ main {
     resize: none;
 }
 
-/* --- NEW: Settings Panel --- */
+/* --- Settings Panel --- */
 .note-settings-panel {
-    display: none; /* Hidden by default */
-    padding: 5px;
+    display: none;
+    padding: 8px;
     background-color: rgba(0,0,0,0.05);
+    flex-direction: column; /* Stack color and alpha controls vertically */
+    gap: 8px;
 }
 
 .note-settings-panel.active {
-    display: block; /* Shown when active */
+    display: flex;
 }
 
-.color-swatches {
+.color-swatches, .alpha-slider-container {
     display: flex;
-    gap: 5px;
+    gap: 8px;
     align-items: center;
+    font-size: 0.9rem;
+    color: #333;
 }
 
 .color-swatch {
@@ -161,4 +165,25 @@ main {
 
 .color-swatch:hover {
     transform: scale(1.2);
+}
+
+/* NEW: Styles for the alpha slider */
+input[type="range"] {
+    flex-grow: 1;
+    -webkit-appearance: none;
+    appearance: none;
+    height: 5px;
+    background: rgba(0,0,0,0.2);
+    border-radius: 5px;
+    outline: none;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 15px;
+    height: 15px;
+    border-radius: 50%;
+    background: #f9c900;
+    cursor: pointer;
 }
