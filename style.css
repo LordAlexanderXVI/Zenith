@@ -12,9 +12,8 @@ body {
     background-color: #1a1a1a; /* Fallback color */
     transition: background-image 1s ease-in-out; /* Smooth transition for the new image */
 
-    /* --- FIXES ARE HERE --- */
-    **background-size: cover;** /* Scales the image to cover the entire screen */
-    **background-repeat: no-repeat;** /* Prevents the image from tiling */
+    background-size: cover; /* Scales the image to cover the entire screen */
+    background-repeat: no-repeat; /* Prevents the image from tiling */
     
     background-position: center;
     display: flex;
