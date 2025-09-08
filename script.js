@@ -13,7 +13,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Function to fetch and set a background via the official Unsplash API
     function setBackgroundImage() {
-        const apiKey = 'jY5-G-OesrK34tHpuAEwEIMlq0L5k3uW8jCq-I4qf2E';
+        // Your Unsplash Access Key is now included here
+        const apiKey = '6LTNce4u8PGdcfFJljsRPPcb2Q-0oyea8b9FKC66BrQ';
         const apiUrl = `https://api.unsplash.com/photos/random?query=nature,new-zealand&orientation=landscape&client_id=${apiKey}`;
 
         fetch(apiUrl)
