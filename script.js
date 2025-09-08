@@ -6,24 +6,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const dateElement = document.getElementById('date');
     const greetingElement = document.getElementById('greeting');
 
-    // --- NEW: Function to fetch and set a background image ---
+    // --- UPDATED: Function to set a background image ---
     function setBackgroundImage() {
+        // We define the URL that provides a random image.
         const imageUrl = 'https://source.unsplash.com/random/1920x1080/?nature,water,new-zealand';
         
-        // We use fetch to get the image. The 'source.unsplash.com' URL
-        // will automatically redirect to a random image.
-        fetch(imageUrl)
-            .then(response => {
-                // Once we have the response, we can use its URL.
-                if (response.ok) {
-                    document.body.style.backgroundImage = `url('${response.url}')`;
-                } else {
-                    console.error('Failed to fetch Unsplash image.');
-                }
-            })
-            .catch(error => {
-                console.error('Error fetching background image:', error);
-            });
+        // We set the background image directly. The browser will handle
+        // the redirect from source.unsplash.com securely.
+        document.body.style.backgroundImage = `url('${imageUrl}')`;
     }
 
     // Function to update the time every second
@@ -55,7 +45,7 @@ document.addEventListener('DOMContentLoaded', () => {
     updateTime();
     updateDate();
     updateGreeting();
-    setBackgroundImage(); // --- NEW: Call the function to set the background ---
+    setBackgroundImage();
 
     // Set an interval to update the time every 1000 milliseconds (1 second)
     setInterval(updateTime, 1000);
