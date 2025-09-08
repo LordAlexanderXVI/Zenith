@@ -12,37 +12,26 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function setBackgroundImage() {
         const apiKey = '6LTNce4u8PGdcfFJljsRPPcb2Q-0oyea8b9FKC66BrQ';
-        const today = new Date().toISOString().slice(0, 10); // Gets date as "YYYY-MM-DD"
+        const today = new Date().toISOString().slice(0, 10);
         const savedImage = JSON.parse(localStorage.getItem('backgroundImage'));
 
-        // If an image was saved today, use it.
         if (savedImage && savedImage.date === today) {
             document.body.style.backgroundImage = `url('${savedImage.url}')`;
         } else {
-            // Otherwise, fetch a new one.
             const apiUrl = `https://api.unsplash.com/photos/random?query=nature,new-zealand&orientation=landscape&client_id=${apiKey}`;
             
             fetch(apiUrl)
                 .then(response => response.json())
                 .then(data => {
                     const imageUrl = data.urls.regular;
-                    // Save the new image URL and today's date to localStorage
-                    const newImage = {
-                        url: imageUrl,
-                        date: today
-                    };
+                    const newImage = { url: imageUrl, date: today };
                     localStorage.setItem('backgroundImage', JSON.stringify(newImage));
-                    
-                    // Set the background and confirm the download with Unsplash
                     document.body.style.backgroundImage = `url('${imageUrl}')`;
                     fetch(data.links.download_location, {
                         headers: { 'Authorization': `Client-ID ${apiKey}` }
                     });
                 })
-                .catch(error => {
-                    console.error('Error fetching Unsplash image:', error);
-                    document.body.style.backgroundColor = '#1a1a1a';
-                });
+                .catch(error => console.error('Error fetching Unsplash image:', error));
         }
     }
 
@@ -73,6 +62,33 @@ document.addEventListener('DOMContentLoaded', () => {
         note.style.left = `${Math.floor(Math.random() * 50 + 20)}px`;
         note.style.top = `${Math.floor(Math.random() * 50 + 20)}px`;
 
+        // --- NEW LOGIC STARTS HERE ---
+
+        // 1. Make the entire note element editable
+        note.contentEditable = true;
+
+        // 2. Add a placeholder
+        const placeholder = document.createElement('span');
+        placeholder.classList.add('placeholder');
+        placeholder.textContent = 'Type here...';
+        note.appendChild(placeholder);
+
+        // 3. Show/hide placeholder based on content
+        note.addEventListener('focus', () => {
+            if (note.contains(placeholder)) {
+                note.removeChild(placeholder);
+            }
+        });
+
+        note.addEventListener('blur', () => {
+            if (note.textContent.trim() === '') {
+                note.innerHTML = ''; // Clear any residual formatting
+                note.appendChild(placeholder);
+            }
+        });
+        
+        // --- NEW LOGIC ENDS HERE ---
+
         notesContainer.appendChild(note);
         makeDraggable(note);
     }
@@ -82,10 +98,13 @@ document.addEventListener('DOMContentLoaded', () => {
         let offsetX, offsetY;
 
         element.addEventListener('mousedown', (e) => {
-            isDragging = true;
-            offsetX = e.clientX - element.offsetLeft;
-            offsetY = e.clientY - element.offsetTop;
-            e.preventDefault();
+            // Only start dragging if the target is the note itself, not text inside it
+            if (e.target === element) {
+                isDragging = true;
+                offsetX = e.clientX - element.offsetLeft;
+                offsetY = e.clientY - element.offsetTop;
+                e.preventDefault();
+            }
         });
 
         document.addEventListener('mousemove', (e) => {
