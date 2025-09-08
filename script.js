@@ -43,7 +43,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Sticky Note Functions ---
 
-    // NEW: Function to save all notes to localStorage
     function saveNotes() {
         const notes = [];
         document.querySelectorAll('.sticky-note').forEach(note => {
@@ -53,23 +52,24 @@ document.addEventListener('DOMContentLoaded', () => {
                 top: note.style.top,
                 width: note.style.width,
                 height: note.style.height,
-                content: note.querySelector('.note-content').innerHTML
+                content: note.querySelector('.note-content').innerHTML,
+                isMinimized: note.classList.contains('minimized') // Save minimized state
             });
         });
         localStorage.setItem('stickyNotes', JSON.stringify(notes));
     }
 
-    // NEW: Function to load notes from localStorage
     function loadNotes() {
         const notes = JSON.parse(localStorage.getItem('stickyNotes')) || [];
         notes.forEach(noteData => createNote(noteData));
     }
 
-    // UPDATED: createNote now accepts data to restore a saved note
     function createNote(data = {}) {
         const note = document.createElement('div');
         note.classList.add('sticky-note');
-        // Use saved data or create a new unique ID
+        if (data.isMinimized) { // Restore minimized state on load
+            note.classList.add('minimized');
+        }
         note.id = data.id || `note-${Date.now()}`;
 
         note.innerHTML = `
@@ -84,11 +84,13 @@ document.addEventListener('DOMContentLoaded', () => {
             <div class="note-content" contenteditable="true"></div>
         `;
 
-        // Restore position, size, and content from saved data
         note.style.left = data.left || `${Math.floor(Math.random() * 50 + 20)}px`;
         note.style.top = data.top || `${Math.floor(Math.random() * 50 + 20)}px`;
         note.style.width = data.width || '250px';
-        note.style.height = data.height || '250px';
+        // Only restore height if not minimized, otherwise CSS handles it
+        if (!data.isMinimized) {
+            note.style.height = data.height || '250px';
+        }
         
         const content = note.querySelector('.note-content');
         content.innerHTML = data.content || '';
@@ -96,14 +98,13 @@ document.addEventListener('DOMContentLoaded', () => {
         const header = note.querySelector('.note-header');
         const title = note.querySelector('.note-title');
         const closeBtn = note.querySelector('.note-close');
+        const minimizeBtn = note.querySelector('.note-minimize'); // Get the minimize button
         
-        // Function to update the title from the first line of content
         const updateTitle = () => {
             const firstLine = content.innerText.split('\n')[0];
-            title.textContent = firstLine.substring(0, 20) || 'New Note'; // Truncate long titles
+            title.textContent = firstLine.substring(0, 20) || 'New Note';
         };
 
-        // Update title when the note loses focus (after typing)
         content.addEventListener('blur', () => {
             updateTitle();
             saveNotes();
@@ -115,18 +116,32 @@ document.addEventListener('DOMContentLoaded', () => {
             notesContainer.removeChild(note);
             saveNotes();
         });
+        
+        // NEW: Event listener for the minimize button
+        minimizeBtn.addEventListener('click', () => {
+            note.classList.toggle('minimized');
+            // If we're restoring the note, re-apply the saved height
+            if (!note.classList.contains('minimized')) {
+                note.style.height = data.height || '250px';
+            }
+            saveNotes();
+        });
 
-        // Use a ResizeObserver to detect when the note is resized
-        new ResizeObserver(saveNotes).observe(note);
+        new ResizeObserver(() => {
+            // Only save size if not minimized
+            if (!note.classList.contains('minimized')) {
+                data.height = note.style.height; // Update height data for restoring
+                saveNotes();
+            }
+        }).observe(note);
 
         notesContainer.appendChild(note);
-        updateTitle(); // Set initial title
+        updateTitle();
     }
 
     function makeDraggable(element, handle) {
         let isDragging = false;
         let offsetX, offsetY;
-
         handle.addEventListener('mousedown', (e) => {
             isDragging = true;
             offsetX = e.clientX - element.offsetLeft;
@@ -134,19 +149,17 @@ document.addEventListener('DOMContentLoaded', () => {
             document.body.style.userSelect = 'none';
             e.preventDefault();
         });
-
         document.addEventListener('mousemove', (e) => {
             if (isDragging) {
                 element.style.left = `${e.clientX - offsetX}px`;
                 element.style.top = `${e.clientY - offsetY}px`;
             }
         });
-
         document.addEventListener('mouseup', () => {
             if (isDragging) {
                 isDragging = false;
                 document.body.style.userSelect = 'auto';
-                saveNotes(); // Save position after dragging
+                saveNotes();
             }
         });
     }
@@ -160,7 +173,7 @@ document.addEventListener('DOMContentLoaded', () => {
         updateGreeting();
         setBackgroundImage();
         setInterval(updateTime, 1000);
-        loadNotes(); // Load existing notes on startup
+        loadNotes();
     }
 
     init();
