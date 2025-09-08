@@ -6,11 +6,29 @@ document.addEventListener('DOMContentLoaded', () => {
     const dateElement = document.getElementById('date');
     const greetingElement = document.getElementById('greeting');
 
+    // --- NEW: Function to fetch and set a background image ---
+    function setBackgroundImage() {
+        const imageUrl = 'https://source.unsplash.com/random/1920x1080/?nature,water,new-zealand';
+        
+        // We use fetch to get the image. The 'source.unsplash.com' URL
+        // will automatically redirect to a random image.
+        fetch(imageUrl)
+            .then(response => {
+                // Once we have the response, we can use its URL.
+                if (response.ok) {
+                    document.body.style.backgroundImage = `url('${response.url}')`;
+                } else {
+                    console.error('Failed to fetch Unsplash image.');
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching background image:', error);
+            });
+    }
+
     // Function to update the time every second
     function updateTime() {
         const now = new Date();
-        // Using toLocaleTimeString for a nice, clean format (e.g., 1:32:31 PM)
-        // 'en-NZ' ensures it respects New Zealand's locale conventions
         timeElement.textContent = now.toLocaleTimeString('en-NZ');
     }
 
@@ -18,7 +36,6 @@ document.addEventListener('DOMContentLoaded', () => {
     function updateDate() {
         const now = new Date();
         const options = { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' };
-        // Using Intl.DateTimeFormat for robust, localized date formatting
         dateElement.textContent = new Intl.DateTimeFormat('en-NZ', options).format(now);
     }
 
@@ -38,6 +55,7 @@ document.addEventListener('DOMContentLoaded', () => {
     updateTime();
     updateDate();
     updateGreeting();
+    setBackgroundImage(); // --- NEW: Call the function to set the background ---
 
     // Set an interval to update the time every 1000 milliseconds (1 second)
     setInterval(updateTime, 1000);
