@@ -8,11 +8,11 @@
 body {
     font-family: 'Inter', sans-serif;
     color: white;
-
+    
     background-color: #1a1a1a; /* Fallback color */
     transition: background-image 1s ease-in-out; /* Smooth transition for the new image */
 
-    /* --- These are the crucial lines --- */
+    /* These are the crucial lines for the background */
     background-size: cover;
     background-repeat: no-repeat;
     background-position: center center;
@@ -37,4 +37,55 @@ body {
 #greeting {
     font-size: 2.5rem;
     margin-top: 1rem;
+}
+
+/* --- To-Do List Styles --- */
+#todo-container {
+    margin-top: 2rem;
+    width: 100%;
+    max-width: 450px; /* Limits the width on larger screens */
+    text-align: center;
+}
+
+#todo-title {
+    font-size: 1.5rem;
+    font-weight: 400;
+}
+
+#todo-list {
+    list-style: none; /* Removes the default bullet points */
+    padding: 0;
+    margin-top: 1rem;
+    font-size: 1.2rem;
+}
+
+/* This is a single task item in the list */
+.todo-item {
+    padding: 0.5rem 0;
+    cursor: pointer;
+    user-select: none; /* Prevents text selection on click */
+    transition: opacity 0.3s ease;
+}
+
+.todo-item.completed {
+    text-decoration: line-through;
+    opacity: 0.5;
+}
+
+#todo-input {
+    width: 100%;
+    padding: 0.5rem;
+    margin-top: 1rem;
+    font-size: 1rem;
+    font-family: 'Inter', sans-serif;
+    color: white;
+    background-color: rgba(0, 0, 0, 0.4); /* Semi-transparent black */
+    border: none;
+    border-bottom: 2px solid white; /* Underline effect */
+    outline: none; /* Removes the browser's default focus outline */
+    text-align: center;
+}
+
+#todo-input::placeholder {
+    color: rgba(255, 255, 255, 0.7);
 }
