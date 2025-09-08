@@ -27,7 +27,7 @@ main {
 }
 
 #time, #date, #greeting {
-    pointer-events: none; /* Make sure dashboard text doesn't interfere with note dragging */
+    pointer-events: none;
 }
 
 #time { font-size: 8rem; font-weight: 700; }
@@ -74,10 +74,11 @@ main {
     box-shadow: 0 5px 15px rgba(0,0,0,0.3);
     display: flex;
     flex-direction: column;
-    resize: both; /* Enables native browser resizing */
-    overflow: hidden; /* Important for resizing */
-    min-width: 150px; /* Prevent resizing too small */
+    resize: both;
+    overflow: hidden;
+    min-width: 150px;
     min-height: 100px;
+    transition: height 0.3s ease; /* Animate the height change */
 }
 
 /* --- Note Header --- */
@@ -86,10 +87,19 @@ main {
     height: 25px;
     background-color: #f9c900;
     display: flex;
-    justify-content: flex-end;
+    justify-content: space-between; /* Pushes title and controls apart */
     align-items: center;
     padding: 0 5px;
-    cursor: move; /* Drag cursor only on the header */
+    cursor: move;
+    flex-shrink: 0; /* Prevents header from shrinking */
+}
+
+.note-title {
+    font-size: 0.9rem;
+    color: #333;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis; /* Adds "..." if title is too long */
 }
 
 .note-controls button {
@@ -107,11 +117,18 @@ main {
 
 /* --- Note Content Area --- */
 .note-content {
-    flex-grow: 1; /* Makes the content area fill the remaining space */
+    flex-grow: 1;
     padding: 10px;
     color: #333;
     font-size: 1rem;
     overflow-wrap: break-word;
-    overflow-y: auto; /* Add a scrollbar if content is too long */
-    outline: none; /* Removes outline when typing */
+    overflow-y: auto;
+    outline: none;
+}
+
+/* --- NEW: Minimized State --- */
+.sticky-note.minimized {
+    height: 25px; /* Shrink to header height */
+    min-height: 25px;
+    resize: none; /* Disable resizing when minimized */
 }
