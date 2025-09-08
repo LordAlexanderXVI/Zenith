@@ -1,17 +1,21 @@
 // Wait until the DOM is fully loaded before running the script
 document.addEventListener('DOMContentLoaded', () => {
-    // Get references to the HTML elements
+    // --- Dashboard Elements ---
     const timeElement = document.getElementById('time');
     const dateElement = document.getElementById('date');
     const greetingElement = document.getElementById('greeting');
 
+    // --- To-Do Elements ---
+    const todoInput = document.getElementById('todo-input');
+    const todoList = document.getElementById('todo-list');
+
+    // --- Dashboard Functions ---
+
     // Function to fetch and set a background via the official Unsplash API
     function setBackgroundImage() {
-        // !! IMPORTANT: Make sure your Unsplash Access Key is pasted here
-        const apiKey = '6LTNce4u8PGdcfFJljsRPPcb2Q-0oyea8b9FKC66BrQ';
+        const apiKey = 'jY5-G-OesrK34tHpuAEwEIMlq0L5k3uW8jCq-I4qf2E';
         const apiUrl = `https://api.unsplash.com/photos/random?query=nature,new-zealand&orientation=landscape&client_id=${apiKey}`;
 
-        // Step 1: Fetch the random image data
         fetch(apiUrl)
             .then(response => {
                 if (!response.ok) {
@@ -20,16 +24,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 return response.json();
             })
             .then(data => {
-                // Set the background image using the URL from the response
                 const imageUrl = data.urls.regular;
                 document.body.style.backgroundImage = `url('${imageUrl}')`;
-
-                // Step 2 (CRUCIAL): Notify Unsplash of the download for API compliance
-                // This second fetch call sends the required confirmation.
                 fetch(data.links.download_location, {
-                    headers: {
-                        'Authorization': `Client-ID ${apiKey}`
-                    }
+                    headers: { 'Authorization': `Client-ID ${apiKey}` }
                 });
             })
             .catch(error => {
@@ -63,12 +61,62 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
     
-    // Initial calls to display content immediately on load
-    updateTime();
-    updateDate();
-    updateGreeting();
-    setBackgroundImage();
+    // --- To-Do Functions ---
 
-    // Set an interval to update the time every 1000 milliseconds (1 second)
-    setInterval(updateTime, 1000);
+    // Function to load tasks from localStorage
+    function loadTasks() {
+        const tasks = JSON.parse(localStorage.getItem('tasks')) || [];
+        tasks.forEach(task => createTaskElement(task.text, task.completed));
+    }
+
+    // Function to save tasks to localStorage
+    function saveTasks() {
+        const tasks = [];
+        document.querySelectorAll('.todo-item').forEach(item => {
+            tasks.push({
+                text: item.textContent,
+                completed: item.classList.contains('completed')
+            });
+        });
+        localStorage.setItem('tasks', JSON.stringify(tasks));
+    }
+
+    // Function to create a new task element in the list
+    function createTaskElement(taskText, isCompleted = false) {
+        const li = document.createElement('li');
+        li.textContent = taskText;
+        li.classList.add('todo-item');
+        if (isCompleted) {
+            li.classList.add('completed');
+        }
+
+        // Event listener to toggle completion
+        li.addEventListener('click', () => {
+            li.classList.toggle('completed');
+            saveTasks();
+        });
+
+        todoList.appendChild(li);
+    }
+
+    // Event listener for the input box
+    todoInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter' && todoInput.value.trim() !== '') {
+            createTaskElement(todoInput.value.trim());
+            todoInput.value = ''; // Clear the input box
+            saveTasks();
+        }
+    });
+
+    // --- Initial Application Setup ---
+    function init() {
+        updateTime();
+        updateDate();
+        updateGreeting();
+        setBackgroundImage();
+        setInterval(updateTime, 1000);
+        loadTasks(); // Load tasks when the app starts
+    }
+
+    init();
 });
