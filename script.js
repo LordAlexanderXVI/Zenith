@@ -1,12 +1,14 @@
 document.addEventListener('DOMContentLoaded', () => {
+    // --- Global Variables ---
+    let highestZ = 2; // Start z-index above the notes-container
+    const HEX_TO_RGB = { '#ffc': '255,255,204', '#cfc': '204,255,204', '#ccf': '204,204,255', '#fcc': '255,204,204', '#cff': '204,255,255', '#fcf': '255,204,255' };
+
     // --- Dashboard Elements ---
     const timeElement = document.getElementById('time');
     const dateElement = document.getElementById('date');
     const greetingElement = document.getElementById('greeting');
     const addNoteBtn = document.getElementById('add-note-btn');
     const notesContainer = document.getElementById('notes-container');
-    // Color map for converting hex to rgb
-    const HEX_TO_RGB = { '#ffc': '255,255,204', '#cfc': '204,255,204', '#ccf': '204,204,255', '#fcc': '255,204,204', '#cff': '204,255,255', '#fcf': '255,204,255' };
 
     // --- Dashboard Functions ---
     // (These functions remain the same)
@@ -56,7 +58,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 height: note.style.height,
                 content: note.querySelector('.note-content').innerHTML,
                 isMinimized: note.classList.contains('minimized'),
-                color: note.style.backgroundColor
+                color: note.style.backgroundColor,
+                zIndex: note.style.zIndex // Save the z-index
             });
         });
         localStorage.setItem('stickyNotes', JSON.stringify(notes));
@@ -64,8 +67,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function loadNotes() {
         const notes = JSON.parse(localStorage.getItem('stickyNotes')) || [];
+        // Find the highest z-index from saved notes
+        const maxZ = notes.reduce((max, note) => Math.max(max, parseInt(note.zIndex) || 2), 2);
+        highestZ = maxZ;
+        // Sort notes by z-index to create them in the correct order
+        notes.sort((a, b) => (parseInt(a.zIndex) || 2) - (parseInt(b.zIndex) || 2));
         notes.forEach(noteData => createNote(noteData));
     }
+
+    // NEW: Function to bring a note to the front
+    const bringToFront = (note) => {
+        highestZ++;
+        note.style.zIndex = highestZ;
+        saveNotes();
+    };
 
     function createNote(data = {}) {
         const note = document.createElement('div');
@@ -73,6 +88,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (data.isMinimized) note.classList.add('minimized');
         note.id = data.id || `note-${Date.now()}`;
         note.style.backgroundColor = data.color || 'rgba(255, 255, 204, 1)';
+        note.style.zIndex = data.zIndex || highestZ; // Set z-index from saved data or current highest
 
         note.innerHTML = `
             <div class="note-header">
@@ -84,9 +100,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>
             </div>
             <div class="note-settings-panel">
-                <div class="color-swatches">
-                    <span>Color:</span>
-                </div>
+                <div class="color-swatches"><span>Color:</span></div>
                 <div class="alpha-slider-container">
                     <span>Alpha:</span>
                     <input type="range" class="alpha-slider" min="0.1" max="1" step="0.05">
@@ -111,10 +125,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const settingsPanel = note.querySelector('.note-settings-panel');
         const alphaSlider = note.querySelector('.alpha-slider');
         
-        // Helper to extract RGBA values from a color string
         const getRgba = (colorStr) => colorStr.match(/(\d+(\.\d+)?)/g).map(Number);
         
-        // Set initial slider value
         alphaSlider.value = getRgba(note.style.backgroundColor)[3] || 1;
 
         const updateTitle = () => {
@@ -128,22 +140,21 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         makeDraggable(note, header);
-
         closeBtn.addEventListener('click', () => {
             notesContainer.removeChild(note);
             saveNotes();
         });
-        
         minimizeBtn.addEventListener('click', () => {
             note.classList.toggle('minimized');
             saveNotes();
         });
-
         settingsBtn.addEventListener('click', () => {
             settingsPanel.classList.toggle('active');
         });
 
-        // Create color swatches
+        // Add the listener to bring the note to the front on any click
+        note.addEventListener('mousedown', () => bringToFront(note), { capture: true });
+
         const colors = Object.keys(HEX_TO_RGB);
         const swatchesContainer = note.querySelector('.color-swatches');
         colors.forEach(hexColor => {
@@ -158,7 +169,6 @@ document.addEventListener('DOMContentLoaded', () => {
             swatchesContainer.appendChild(swatch);
         });
         
-        // Alpha slider functionality
         alphaSlider.addEventListener('input', () => {
             const [r, g, b] = getRgba(note.style.backgroundColor);
             note.style.backgroundColor = `rgba(${r}, ${g}, ${b}, ${alphaSlider.value})`;
@@ -179,7 +189,6 @@ document.addEventListener('DOMContentLoaded', () => {
             offsetX = e.clientX - element.offsetLeft;
             offsetY = e.clientY - element.offsetTop;
             document.body.style.userSelect = 'none';
-            e.preventDefault();
         });
         document.addEventListener('mousemove', (e) => {
             if (isDragging) {
@@ -196,7 +205,10 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    addNoteBtn.addEventListener('click', () => createNote());
+    addNoteBtn.addEventListener('click', () => {
+        highestZ++;
+        createNote({ zIndex: highestZ });
+    });
 
     function init() {
         updateTime();
