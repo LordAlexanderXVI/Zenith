@@ -34,6 +34,58 @@ main {
 #date { font-size: 1.5rem; }
 #greeting { font-size: 2.5rem; margin-top: 1rem; }
 
+/* --- NEW: Note Dock Styles --- */
+#note-dock {
+    position: fixed;
+    left: 0;
+    top: 0;
+    height: 100%;
+    width: 280px;
+    background-color: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(10px);
+    z-index: 20;
+    transform: translateX(-100%); /* Start hidden off-screen */
+    transition: transform 0.4s ease-in-out;
+    border-right: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+#note-dock.active {
+    transform: translateX(0); /* Slide in */
+}
+
+#dock-toggle-btn {
+    position: absolute;
+    top: 50%;
+    left: 100%; /* Position just outside the dock */
+    transform: translateY(-50%);
+    width: 25px;
+    height: 60px;
+    background-color: rgba(0, 0, 0, 0.7);
+    border: none;
+    color: white;
+    cursor: pointer;
+    border-top-right-radius: 8px;
+    border-bottom-right-radius: 8px;
+    font-size: 1rem;
+    border-left: none;
+}
+
+#dock-content {
+    padding: 1rem;
+    color: white;
+}
+
+#dock-content h2 {
+    text-align: center;
+    margin-bottom: 1rem;
+    font-weight: 400;
+}
+
+#dock-list {
+    list-style: none;
+    padding: 0;
+}
+
 #add-note-btn {
     position: fixed;
     bottom: 20px;
@@ -78,111 +130,20 @@ main {
     min-width: 150px;
     min-height: 100px;
     transition: height 0.3s ease, background-color 0.3s ease;
-    z-index: 2; /* <<< NEW: Default z-index for notes */
+    z-index: 2;
 }
 
-/* --- Note Header --- */
-.note-header {
-    width: 100%;
-    height: 25px;
-    background-color: rgba(0,0,0,0.1);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 0 5px;
-    cursor: move;
-    flex-shrink: 0;
-}
-
-.note-title {
-    font-size: 0.9rem;
-    color: #333;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.note-controls button {
-    background: none;
-    border: none;
-    color: #333;
-    cursor: pointer;
-    font-size: 0.9rem;
-    margin-left: 5px;
-    opacity: 0.7;
-    transition: opacity 0.2s;
-}
-
+/* (The rest of the note styles remain the same) */
+.note-header { width: 100%; height: 25px; background-color: rgba(0,0,0,0.1); display: flex; justify-content: space-between; align-items: center; padding: 0 5px; cursor: move; flex-shrink: 0; }
+.note-title { font-size: 0.9rem; color: #333; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.note-controls button { background: none; border: none; color: #333; cursor: pointer; font-size: 0.9rem; margin-left: 5px; opacity: 0.7; transition: opacity 0.2s; }
 .note-controls button:hover { opacity: 1; }
-
-/* --- Note Content Area --- */
-.note-content {
-    flex-grow: 1;
-    padding: 10px;
-    color: #333;
-    font-size: 1rem;
-    overflow-wrap: break-word;
-    overflow-y: auto;
-    outline: none;
-}
-
-/* --- Minimized State --- */
-.sticky-note.minimized {
-    height: 25px !important;
-    min-height: 25px;
-    resize: none;
-}
-
-/* --- Settings Panel --- */
-.note-settings-panel {
-    display: none;
-    padding: 8px;
-    background-color: rgba(0,0,0,0.05);
-    flex-direction: column;
-    gap: 8px;
-}
-
-.note-settings-panel.active {
-    display: flex;
-}
-
-.color-swatches, .alpha-slider-container {
-    display: flex;
-    gap: 8px;
-    align-items: center;
-    font-size: 0.9rem;
-    color: #333;
-}
-
-.color-swatch {
-    width: 20px;
-    height: 20px;
-    border-radius: 50%;
-    cursor: pointer;
-    border: 2px solid rgba(0,0,0,0.2);
-    transition: transform 0.2s;
-}
-
-.color-swatch:hover {
-    transform: scale(1.2);
-}
-
-input[type="range"] {
-    flex-grow: 1;
-    -webkit-appearance: none;
-    appearance: none;
-    height: 5px;
-    background: rgba(0,0,0,0.2);
-    border-radius: 5px;
-    outline: none;
-}
-
-input[type="range"]::-webkit-slider-thumb {
-    -webkit-appearance: none;
-    appearance: none;
-    width: 15px;
-    height: 15px;
-    border-radius: 50%;
-    background: #f9c900;
-    cursor: pointer;
-}
+.note-content { flex-grow: 1; padding: 10px; color: #333; font-size: 1rem; overflow-wrap: break-word; overflow-y: auto; outline: none; }
+.sticky-note.minimized { height: 25px !important; min-height: 25px; resize: none; }
+.note-settings-panel { display: none; padding: 8px; background-color: rgba(0,0,0,0.05); flex-direction: column; gap: 8px; }
+.note-settings-panel.active { display: flex; }
+.color-swatches, .alpha-slider-container { display: flex; gap: 8px; align-items: center; font-size: 0.9rem; color: #333; }
+.color-swatch { width: 20px; height: 20px; border-radius: 50%; cursor: pointer; border: 2px solid rgba(0,0,0,0.2); transition: transform 0.2s; }
+.color-swatch:hover { transform: scale(1.2); }
+input[type="range"] { flex-grow: 1; -webkit-appearance: none; appearance: none; height: 5px; background: rgba(0,0,0,0.2); border-radius: 5px; outline: none; }
+input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 15px; height: 15px; border-radius: 50%; background: #f9c900; cursor: pointer; }
