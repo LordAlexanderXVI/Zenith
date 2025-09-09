@@ -2,7 +2,6 @@ document.addEventListener('DOMContentLoaded', () => {
     let highestZ = 2;
     const HEX_TO_RGB = { '#ffc': '255,255,204', '#cfc': '204,255,204', '#ccf': '204,204,255', '#fcc': '255,204,204', '#cff': '204,255,255', '#fcf': '255,204,255' };
 
-    // ALL elements are now correctly defined inside the listener
     const timeElement = document.getElementById('time');
     const dateElement = document.getElementById('date');
     const greetingElement = document.getElementById('greeting');
@@ -13,7 +12,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const dockList = document.getElementById('dock-list');
     const dockAllBtn = document.getElementById('dock-all-btn');
 
-    // This listener is now safely inside
     dockToggleBtn.addEventListener('click', () => noteDock.classList.toggle('active'));
 
     function setBackgroundImage() {
@@ -68,7 +66,8 @@ document.addEventListener('DOMContentLoaded', () => {
             deleteBtn.innerHTML = '<i class="fa-solid fa-trash-can"></i>';
             
             deleteBtn.addEventListener('click', (e) => {
-                e.stopPropagation();
+                // BUG FIX #2: Stop the click from triggering the parent's mousedown event
+                e.stopPropagation(); 
                 const notes = getAllNotes().filter(n => n.id !== noteData.id);
                 saveAllNotes(notes);
                 loadUI();
@@ -87,15 +86,16 @@ document.addEventListener('DOMContentLoaded', () => {
         const noteIndex = notes.findIndex(n => n.id === noteId);
         if (noteIndex === -1) return;
         
-        notes[noteIndex].isDocked = false;
+        // BUG FIX #1: Don't use the old position. The new note will be positioned by the drag handler.
+        const noteData = notes[noteIndex];
+        noteData.isDocked = false;
+        
         saveAllNotes(notes);
         
         const listItem = dockList.querySelector(`[data-note-id="${noteId}"]`);
-        if (listItem) {
-            dockList.removeChild(listItem);
-        }
+        if (listItem) listItem.style.display = 'none'; // Hide immediately for better UX
 
-        const newNoteElement = createNote(notes[noteIndex]);
+        const newNoteElement = createNote(noteData);
         
         const header = newNoteElement.querySelector('.note-header');
         const fakeEvent = new MouseEvent('mousedown', {
@@ -105,6 +105,8 @@ document.addEventListener('DOMContentLoaded', () => {
             clientY: initialEvent.clientY
         });
         header.dispatchEvent(fakeEvent);
+        
+        loadUI();
     }
 
     function loadUI() {
@@ -253,6 +255,5 @@ document.addEventListener('DOMContentLoaded', () => {
         setInterval(updateTime, 1000);
         loadUI();
     }
-
     init();
 });
