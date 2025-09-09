@@ -2,6 +2,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let highestZ = 2;
     const HEX_TO_RGB = { '#ffc': '255,255,204', '#cfc': '204,255,204', '#ccf': '204,204,255', '#fcc': '255,204,204', '#cff': '204,255,255', '#fcf': '255,204,255' };
 
+    // ALL elements are now correctly defined inside the listener
     const timeElement = document.getElementById('time');
     const dateElement = document.getElementById('date');
     const greetingElement = document.getElementById('greeting');
@@ -12,9 +13,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const dockList = document.getElementById('dock-list');
     const dockAllBtn = document.getElementById('dock-all-btn');
 
+    // This listener is now safely inside
     dockToggleBtn.addEventListener('click', () => noteDock.classList.toggle('active'));
 
-    // THIS FUNCTION IS NOW FULLY RESTORED
     function setBackgroundImage() {
         const apiKey = '6LTNce4u8PGdcfFJljsRPPcb2Q-0oyea8b9FKC66BrQ';
         const today = new Date().toISOString().slice(0, 10);
@@ -89,6 +90,12 @@ document.addEventListener('DOMContentLoaded', () => {
         notes[noteIndex].isDocked = false;
         saveAllNotes(notes);
         
+        // Before creating the new note, remove the list item from the dock
+        const listItem = dockList.querySelector(`[data-note-id="${noteId}"]`);
+        if (listItem) {
+            dockList.removeChild(listItem);
+        }
+
         const newNoteElement = createNote(notes[noteIndex]);
         
         const header = newNoteElement.querySelector('.note-header');
@@ -99,8 +106,6 @@ document.addEventListener('DOMContentLoaded', () => {
             clientY: initialEvent.clientY
         });
         header.dispatchEvent(fakeEvent);
-        
-        loadUI();
     }
 
     function loadUI() {
@@ -152,9 +157,13 @@ document.addEventListener('DOMContentLoaded', () => {
         };
         const saveThisNote = () => {
             const notes = getAllNotes();
-            const noteIndex = notes.findIndex(n => n.id === note.id);
+            let noteIndex = notes.findIndex(n => n.id === note.id);
+            if (noteIndex === -1) { // If it's a new note, add it
+                notes.push({});
+                noteIndex = notes.length - 1;
+            }
             const noteData = { id: note.id, left: note.style.left, top: note.style.top, width: note.style.width, height: note.style.height, content: content.innerHTML, isMinimized: note.classList.contains('minimized'), color: note.style.backgroundColor, zIndex: note.style.zIndex, isDocked: false };
-            if (noteIndex !== -1) { notes[noteIndex] = noteData; } else { notes.push(noteData); }
+            notes[noteIndex] = noteData;
             saveAllNotes(notes);
         };
         content.addEventListener('blur', () => { updateTitle(); saveThisNote(); });
@@ -245,5 +254,6 @@ document.addEventListener('DOMContentLoaded', () => {
         setInterval(updateTime, 1000);
         loadUI();
     }
+
     init();
 });
