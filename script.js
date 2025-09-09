@@ -42,6 +42,10 @@ document.addEventListener('DOMContentLoaded', () => {
             deleteBtn.className = 'docked-note-delete-btn';
             deleteBtn.innerHTML = '<i class="fa-solid fa-trash-can"></i>';
             
+            // BUG FIX: Isolate the delete functionality
+            deleteBtn.addEventListener('mousedown', e => {
+                e.stopPropagation(); // Prevent undock from starting
+            });
             deleteBtn.addEventListener('click', e => {
                 e.stopPropagation();
                 saveAllNotes(getAllNotes().filter(n => n.id !== noteData.id));
@@ -127,11 +131,13 @@ document.addEventListener('DOMContentLoaded', () => {
         note.addEventListener('mouseup', updateAndSave);
         
         notesContainer.appendChild(note);
+        return note; // Return the created element
     }
 
     function makeDraggable(element, handle, onDragEnd) {
         handle.addEventListener('mousedown', (e) => {
             let isDragging = true;
+            // Place note under cursor
             let offsetX = e.clientX - element.offsetLeft;
             let offsetY = e.clientY - element.offsetTop;
             document.body.style.userSelect = 'none';
@@ -177,9 +183,19 @@ document.addEventListener('DOMContentLoaded', () => {
         let notes = getAllNotes();
         const noteIndex = notes.findIndex(n => n.id === noteId);
         if (noteIndex === -1) return;
-        notes[noteIndex].isDocked = false;
+        
+        const noteData = notes[noteIndex];
+        noteData.isDocked = false;
+        
+        // BUG FIX: Set position to cursor, accounting for note size
+        const noteWidth = parseInt(noteData.width) || 250;
+        const noteHeight = parseInt(noteData.height) || 250;
+        noteData.left = `${initialEvent.clientX - (noteWidth / 2)}px`;
+        noteData.top = `${initialEvent.clientY - 15}px`; // 15px is about half the header height
+
         saveAllNotes(notes);
         loadUI();
+        
         const newNoteElement = document.getElementById(noteId);
         if (newNoteElement) {
             const header = newNoteElement.querySelector('.note-header');
@@ -206,47 +222,55 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // --- Dashboard Clock/Greeting Functions ---
-    function setBackgroundImage() {
-        const apiKey = '6LTNce4u8PGdcfFJljsRPPcb2Q-0oyea8b9FKC66BrQ';
-        const today = new Date().toISOString().slice(0, 10);
-        const savedImage = JSON.parse(localStorage.getItem('backgroundImage'));
-        if (savedImage && savedImage.date === today) {
-            document.body.style.backgroundImage = `url('${savedImage.url}')`;
-        } else {
-            const apiUrl = `https://api.unsplash.com/photos/random?query=nature,new-zealand&orientation=landscape&client_id=${apiKey}`;
-            fetch(apiUrl).then(response => response.json()).then(data => {
-                const imageUrl = data.urls.regular;
-                const newImage = { url: imageUrl, date: today };
-                localStorage.setItem('backgroundImage', JSON.stringify(newImage));
-                document.body.style.backgroundImage = `url('${imageUrl}')`;
-                fetch(data.links.download_location, { headers: { 'Authorization': `Client-ID ${apiKey}` } });
-            }).catch(error => console.error('Error fetching Unsplash image:', error));
-        }
-    }
-    function updateTime() {
-        const now = new Date();
-        timeElement.textContent = now.toLocaleTimeString('en-NZ', { hour12: true });
-    }
-    function updateDate() {
-        const now = new Date();
-        const options = { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' };
-        dateElement.textContent = new Intl.DateTimeFormat('en-NZ', options).format(now);
-    }
-    function updateGreeting() {
-        const hour = new Date().getHours();
-        if (hour < 12) greetingElement.textContent = 'Good morning.';
-        else if (hour < 18) greetingElement.textContent = 'Good afternoon.';
-        else greetingElement.textContent = 'Good evening.';
-    }
+    function setBackgroundImage() { /* ... */ }
+    function updateTime() { /* ... */ }
+    function updateDate() { /* ... */ }
+    function updateGreeting() { /* ... */ }
 
     // --- Initial Setup ---
     function init() {
         dockToggleBtn.addEventListener('click', () => noteDock.classList.toggle('active'));
-        updateTime();
-        updateDate();
-        updateGreeting();
-        setBackgroundImage();
-        setInterval(updateTime, 1000);
+        // (Function definitions need to be available before init)
+        const dashboardFunctions = {
+            setBackgroundImage: () => {
+                const apiKey = '6LTNce4u8PGdcfFJljsRPPcb2Q-0oyea8b9FKC66BrQ';
+                const today = new Date().toISOString().slice(0, 10);
+                const savedImage = JSON.parse(localStorage.getItem('backgroundImage'));
+                if (savedImage && savedImage.date === today) {
+                    document.body.style.backgroundImage = `url('${savedImage.url}')`;
+                } else {
+                    const apiUrl = `https://api.unsplash.com/photos/random?query=nature,new-zealand&orientation=landscape&client_id=${apiKey}`;
+                    fetch(apiUrl).then(response => response.json()).then(data => {
+                        const imageUrl = data.urls.regular;
+                        const newImage = { url: imageUrl, date: today };
+                        localStorage.setItem('backgroundImage', JSON.stringify(newImage));
+                        document.body.style.backgroundImage = `url('${imageUrl}')`;
+                        fetch(data.links.download_location, { headers: { 'Authorization': `Client-ID ${apiKey}` } });
+                    }).catch(error => console.error('Error fetching Unsplash image:', error));
+                }
+            },
+            updateTime: () => {
+                const now = new Date();
+                timeElement.textContent = now.toLocaleTimeString('en-NZ', { hour12: true });
+            },
+            updateDate: () => {
+                const now = new Date();
+                const options = { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' };
+                dateElement.textContent = new Intl.DateTimeFormat('en-NZ', options).format(now);
+            },
+            updateGreeting: () => {
+                const hour = new Date().getHours();
+                if (hour < 12) greetingElement.textContent = 'Good morning.';
+                else if (hour < 18) greetingElement.textContent = 'Good afternoon.';
+                else greetingElement.textContent = 'Good evening.';
+            }
+        };
+
+        dashboardFunctions.updateTime();
+        dashboardFunctions.updateDate();
+        dashboardFunctions.updateGreeting();
+        dashboardFunctions.setBackgroundImage();
+        setInterval(dashboardFunctions.updateTime, 1000);
         loadUI();
     }
     init();
