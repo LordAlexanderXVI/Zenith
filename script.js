@@ -220,7 +220,7 @@ document.addEventListener('DOMContentLoaded', () => {
         dashboardFunctions.updateDate();
         dashboardFunctions.updateGreeting();
         dashboardFunctions.setBackgroundImage();
-        setInterval(dashboardFunctions.updateTime, 1000);
+        setInterval(dashboardFunctions.updateTime, 100);
         loadUI();
     }
 
