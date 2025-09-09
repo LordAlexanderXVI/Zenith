@@ -2,6 +2,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let highestZ = 2;
     const HEX_TO_RGB = { '#ffc': '255,255,204', '#cfc': '204,255,204', '#ccf': '204,204,255', '#fcc': '255,204,204', '#cff': '204,255,255', '#fcf': '255,204,255' };
 
+    // --- Element Selectors ---
     const timeElement = document.getElementById('time');
     const dateElement = document.getElementById('date');
     const greetingElement = document.getElementById('greeting');
@@ -12,8 +13,199 @@ document.addEventListener('DOMContentLoaded', () => {
     const dockList = document.getElementById('dock-list');
     const dockAllBtn = document.getElementById('dock-all-btn');
 
-    dockToggleBtn.addEventListener('click', () => noteDock.classList.toggle('active'));
+    // --- Core Data Functions ---
+    const getAllNotes = () => JSON.parse(localStorage.getItem('stickyNotes')) || [];
+    const saveAllNotes = (notes) => localStorage.setItem('stickyNotes', JSON.stringify(notes));
 
+    // --- UI Rendering ---
+    function loadUI() {
+        notesContainer.innerHTML = '';
+        const notes = getAllNotes();
+        highestZ = notes.reduce((max, note) => Math.max(max, parseInt(note.zIndex) || 2), 2);
+        notes.filter(n => !n.isDocked).sort((a, b) => (a.zIndex || 2) - (b.zIndex || 2)).forEach(createNoteElement);
+        renderDock();
+    }
+
+    function renderDock() {
+        const notes = getAllNotes();
+        dockList.innerHTML = '';
+        notes.filter(n => n.isDocked).forEach(noteData => {
+            const li = document.createElement('li');
+            li.className = 'docked-note-item';
+            li.dataset.noteId = noteData.id;
+
+            const titleSpan = document.createElement('span');
+            const firstLine = new DOMParser().parseFromString(noteData.content || '', 'text/html').body.innerText.split('\n')[0];
+            titleSpan.textContent = firstLine.substring(0, 20) || 'Docked Note';
+            
+            const deleteBtn = document.createElement('button');
+            deleteBtn.className = 'docked-note-delete-btn';
+            deleteBtn.innerHTML = '<i class="fa-solid fa-trash-can"></i>';
+            
+            deleteBtn.addEventListener('click', e => {
+                e.stopPropagation();
+                saveAllNotes(getAllNotes().filter(n => n.id !== noteData.id));
+                loadUI();
+            });
+
+            li.addEventListener('mousedown', e => undockNote(noteData.id, e));
+            li.appendChild(titleSpan);
+            li.appendChild(deleteBtn);
+            dockList.appendChild(li);
+        });
+    }
+
+    // --- Note Creation and Manipulation ---
+    function createNoteElement(data) {
+        const note = document.createElement('div');
+        note.className = 'sticky-note';
+        if (data.isMinimized) note.classList.add('minimized');
+        note.id = data.id;
+        note.style.backgroundColor = data.color || 'rgba(255, 255, 204, 1)';
+        note.style.zIndex = data.zIndex || highestZ;
+        note.style.left = data.left || `${Math.floor(Math.random() * 50 + 20)}px`;
+        note.style.top = data.top || `${Math.floor(Math.random() * 50 + 20)}px`;
+        note.style.width = data.width || '250px';
+        note.style.height = data.height || '250px';
+
+        note.innerHTML = `
+            <div class="note-header"><span class="note-title"></span><div class="note-controls"><button class="note-minimize" title="Minimize"><i class="fa-solid fa-window-minimize"></i></button><button class="note-settings" title="Settings"><i class="fa-solid fa-gear"></i></button><button class="note-close" title="Close"><i class="fa-solid fa-xmark"></i></button></div></div>
+            <div class="note-settings-panel"><div class="color-swatches"><span>Color:</span></div><div class="alpha-slider-container"><span>Alpha:</span><input type="range" class="alpha-slider" min="0.1" max="1" step="0.05"></div></div>
+            <div class="note-content" contenteditable="true"></div>`;
+        
+        const content = note.querySelector('.note-content');
+        content.innerHTML = data.content || '';
+
+        const updateAndSave = () => {
+            let notes = getAllNotes();
+            let noteIndex = notes.findIndex(n => n.id === note.id);
+            if (noteIndex === -1) return;
+            
+            const firstLine = content.innerText.split('\n')[0];
+            note.querySelector('.note-title').textContent = firstLine.substring(0, 20) || 'New Note';
+            
+            notes[noteIndex] = {
+                ...notes[noteIndex],
+                left: note.style.left, top: note.style.top, width: note.style.width, height: note.style.height,
+                content: content.innerHTML, isMinimized: note.classList.contains('minimized'),
+                color: note.style.backgroundColor, zIndex: note.style.zIndex
+            };
+            saveAllNotes(notes);
+        };
+        
+        makeDraggable(note, note.querySelector('.note-header'), updateAndSave);
+        note.querySelector('.note-close').addEventListener('click', () => {
+            note.remove();
+            saveAllNotes(getAllNotes().filter(n => n.id !== note.id));
+        });
+        note.querySelector('.note-minimize').addEventListener('click', () => { note.classList.toggle('minimized'); updateAndSave(); });
+        note.querySelector('.note-settings').addEventListener('click', () => note.querySelector('.note-settings-panel').classList.toggle('active'));
+        note.addEventListener('mousedown', () => { highestZ++; note.style.zIndex = highestZ; updateAndSave(); }, { capture: true });
+        
+        const alphaSlider = note.querySelector('.alpha-slider');
+        const getRgba = (colorStr) => colorStr.match(/(\d+(\.\d+)?)/g).map(Number);
+        alphaSlider.value = getRgba(note.style.backgroundColor)[3] || 1;
+        
+        Object.keys(HEX_TO_RGB).forEach(hexColor => {
+            const swatch = document.createElement('div');
+            swatch.className = 'color-swatch';
+            swatch.style.backgroundColor = hexColor;
+            swatch.addEventListener('click', () => {
+                note.style.backgroundColor = `rgba(${HEX_TO_RGB[hexColor]}, ${alphaSlider.value})`;
+                updateAndSave();
+            });
+            note.querySelector('.color-swatches').appendChild(swatch);
+        });
+
+        alphaSlider.addEventListener('input', () => {
+            const [r, g, b] = getRgba(note.style.backgroundColor);
+            note.style.backgroundColor = `rgba(${r}, ${g}, ${b}, ${alphaSlider.value})`;
+            updateAndSave();
+        });
+        
+        content.addEventListener('blur', updateAndSave);
+        note.addEventListener('mouseup', updateAndSave);
+        
+        notesContainer.appendChild(note);
+    }
+
+    function makeDraggable(element, handle, onDragEnd) {
+        handle.addEventListener('mousedown', (e) => {
+            let isDragging = true;
+            let offsetX = e.clientX - element.offsetLeft;
+            let offsetY = e.clientY - element.offsetTop;
+            document.body.style.userSelect = 'none';
+
+            const onMouseMove = (moveEvent) => {
+                if (!isDragging) return;
+                element.style.left = `${moveEvent.clientX - offsetX}px`;
+                element.style.top = `${moveEvent.clientY - offsetY}px`;
+                if (noteDock.classList.contains('active') && moveEvent.clientX < noteDock.offsetWidth) {
+                    noteDock.classList.add('hover');
+                } else {
+                    noteDock.classList.remove('hover');
+                }
+            };
+
+            const onMouseUp = (upEvent) => {
+                if (!isDragging) return;
+                isDragging = false;
+                document.body.style.userSelect = 'auto';
+                document.removeEventListener('mousemove', onMouseMove);
+                document.removeEventListener('mouseup', onMouseUp);
+                
+                if (noteDock.classList.contains('active') && upEvent.clientX < noteDock.offsetWidth) {
+                    let notes = getAllNotes();
+                    const noteIndex = notes.findIndex(n => n.id === element.id);
+                    if (noteIndex !== -1) {
+                        notes[noteIndex].isDocked = true;
+                        saveAllNotes(notes);
+                        loadUI();
+                    }
+                } else {
+                    onDragEnd();
+                }
+                noteDock.classList.remove('hover');
+            };
+
+            document.addEventListener('mousemove', onMouseMove);
+            document.addEventListener('mouseup', onMouseUp);
+        });
+    }
+
+    function undockNote(noteId, initialEvent) {
+        let notes = getAllNotes();
+        const noteIndex = notes.findIndex(n => n.id === noteId);
+        if (noteIndex === -1) return;
+        notes[noteIndex].isDocked = false;
+        saveAllNotes(notes);
+        loadUI();
+        const newNoteElement = document.getElementById(noteId);
+        if (newNoteElement) {
+            const header = newNoteElement.querySelector('.note-header');
+            const fakeEvent = new MouseEvent('mousedown', { bubbles: true, cancelable: true, clientX: initialEvent.clientX, clientY: initialEvent.clientY });
+            header.dispatchEvent(fakeEvent);
+        }
+    }
+
+    // --- Button Event Listeners ---
+    addNoteBtn.addEventListener('click', () => {
+        let notes = getAllNotes();
+        highestZ++;
+        const newNoteData = { id: `note-${Date.now()}`, zIndex: highestZ, isDocked: false };
+        notes.push(newNoteData);
+        saveAllNotes(notes);
+        createNoteElement(newNoteData);
+    });
+    
+    dockAllBtn.addEventListener('click', () => {
+        let notes = getAllNotes();
+        notes.forEach(note => { if (!note.isDocked) note.isDocked = true; });
+        saveAllNotes(notes);
+        loadUI();
+    });
+
+    // --- Dashboard Clock/Greeting Functions ---
     function setBackgroundImage() {
         const apiKey = '6LTNce4u8PGdcfFJljsRPPcb2Q-0oyea8b9FKC66BrQ';
         const today = new Date().toISOString().slice(0, 10);
@@ -31,7 +223,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }).catch(error => console.error('Error fetching Unsplash image:', error));
         }
     }
-    
     function updateTime() {
         const now = new Date();
         timeElement.textContent = now.toLocaleTimeString('en-NZ', { hour12: true });
@@ -48,206 +239,9 @@ document.addEventListener('DOMContentLoaded', () => {
         else greetingElement.textContent = 'Good evening.';
     }
 
-    function getAllNotes() { return JSON.parse(localStorage.getItem('stickyNotes')) || []; }
-    function saveAllNotes(notes) { localStorage.setItem('stickyNotes', JSON.stringify(notes)); }
-
-    function renderDock() {
-        const notes = getAllNotes();
-        dockList.innerHTML = '';
-        notes.filter(note => note.isDocked).forEach(noteData => {
-            const li = document.createElement('li');
-            li.className = 'docked-note-item';
-            li.dataset.noteId = noteData.id;
-            const titleSpan = document.createElement('span');
-            const firstLine = new DOMParser().parseFromString(noteData.content, 'text/html').body.innerText.split('\n')[0];
-            titleSpan.textContent = firstLine.substring(0, 20) || 'New Note';
-            const deleteBtn = document.createElement('button');
-            deleteBtn.className = 'docked-note-delete-btn';
-            deleteBtn.innerHTML = '<i class="fa-solid fa-trash-can"></i>';
-            
-            deleteBtn.addEventListener('click', (e) => {
-                // BUG FIX #2: Stop the click from triggering the parent's mousedown event
-                e.stopPropagation(); 
-                const notes = getAllNotes().filter(n => n.id !== noteData.id);
-                saveAllNotes(notes);
-                loadUI();
-            });
-
-            li.addEventListener('mousedown', (e) => undockNote(noteData.id, e));
-
-            li.appendChild(titleSpan);
-            li.appendChild(deleteBtn);
-            dockList.appendChild(li);
-        });
-    }
-    
-    function undockNote(noteId, initialEvent) {
-        const notes = getAllNotes();
-        const noteIndex = notes.findIndex(n => n.id === noteId);
-        if (noteIndex === -1) return;
-        
-        // BUG FIX #1: Don't use the old position. The new note will be positioned by the drag handler.
-        const noteData = notes[noteIndex];
-        noteData.isDocked = false;
-        
-        saveAllNotes(notes);
-        
-        const listItem = dockList.querySelector(`[data-note-id="${noteId}"]`);
-        if (listItem) listItem.style.display = 'none'; // Hide immediately for better UX
-
-        const newNoteElement = createNote(noteData);
-        
-        const header = newNoteElement.querySelector('.note-header');
-        const fakeEvent = new MouseEvent('mousedown', {
-            bubbles: true,
-            cancelable: true,
-            clientX: initialEvent.clientX,
-            clientY: initialEvent.clientY
-        });
-        header.dispatchEvent(fakeEvent);
-        
-        loadUI();
-    }
-
-    function loadUI() {
-        notesContainer.innerHTML = '';
-        const notes = getAllNotes();
-        const maxZ = notes.reduce((max, note) => Math.max(max, parseInt(note.zIndex) || 2), 2);
-        highestZ = maxZ;
-        notes.filter(note => !note.isDocked).sort((a, b) => (parseInt(a.zIndex) || 2) - (parseInt(b.zIndex) || 2)).forEach(noteData => createNote(noteData));
-        renderDock();
-    }
-    
-    const bringToFront = (note) => {
-        highestZ++;
-        note.style.zIndex = highestZ;
-        const notes = getAllNotes();
-        const noteIndex = notes.findIndex(n => n.id === note.id);
-        if (noteIndex !== -1) {
-            notes[noteIndex].zIndex = highestZ;
-            saveAllNotes(notes);
-        }
-    };
-    
-    function createNote(data = {}) {
-        const note = document.createElement('div');
-        note.classList.add('sticky-note');
-        if (data.isMinimized) note.classList.add('minimized');
-        note.id = data.id || `note-${Date.now()}`;
-        note.style.backgroundColor = data.color || 'rgba(255, 255, 204, 1)';
-        note.style.zIndex = data.zIndex || highestZ;
-        note.innerHTML = `<div class="note-header"><span class="note-title"></span><div class="note-controls"><button class="note-minimize" title="Minimize"><i class="fa-solid fa-window-minimize"></i></button><button class="note-settings" title="Settings"><i class="fa-solid fa-gear"></i></button><button class="note-close" title="Close"><i class="fa-solid fa-xmark"></i></button></div></div><div class="note-settings-panel"><div class="color-swatches"><span>Color:</span></div><div class="alpha-slider-container"><span>Alpha:</span><input type="range" class="alpha-slider" min="0.1" max="1" step="0.05"></div></div><div class="note-content" contenteditable="true"></div>`;
-        note.style.left = data.left || `${Math.floor(Math.random() * 50 + 20)}px`;
-        note.style.top = data.top || `${Math.floor(Math.random() * 50 + 20)}px`;
-        note.style.width = data.width || '250px';
-        note.style.height = data.height || '250px';
-        const content = note.querySelector('.note-content');
-        content.innerHTML = data.content || '';
-        const header = note.querySelector('.note-header');
-        const title = note.querySelector('.note-title');
-        const closeBtn = note.querySelector('.note-close');
-        const minimizeBtn = note.querySelector('.note-minimize');
-        const settingsBtn = note.querySelector('.note-settings');
-        const settingsPanel = note.querySelector('.note-settings-panel');
-        const alphaSlider = note.querySelector('.alpha-slider');
-        const getRgba = (colorStr) => colorStr.match(/(\d+(\.\d+)?)/g).map(Number);
-        alphaSlider.value = getRgba(note.style.backgroundColor)[3] || 1;
-        const updateTitle = () => {
-            const firstLine = content.innerText.split('\n')[0];
-            title.textContent = firstLine.substring(0, 20) || 'New Note';
-        };
-        const saveThisNote = () => {
-            const notes = getAllNotes();
-            let noteIndex = notes.findIndex(n => n.id === note.id);
-            if (noteIndex === -1) {
-                notes.push({});
-                noteIndex = notes.length - 1;
-            }
-            const noteData = { id: note.id, left: note.style.left, top: note.style.top, width: note.style.width, height: note.style.height, content: content.innerHTML, isMinimized: note.classList.contains('minimized'), color: note.style.backgroundColor, zIndex: note.style.zIndex, isDocked: false };
-            notes[noteIndex] = noteData;
-            saveAllNotes(notes);
-        };
-        content.addEventListener('blur', () => { updateTitle(); saveThisNote(); });
-        makeDraggable(note, header, saveThisNote);
-        closeBtn.addEventListener('click', () => {
-            notesContainer.removeChild(note);
-            const notes = getAllNotes().filter(n => n.id !== note.id);
-            saveAllNotes(notes);
-        });
-        minimizeBtn.addEventListener('click', () => { note.classList.toggle('minimized'); saveThisNote(); });
-        settingsBtn.addEventListener('click', () => settingsPanel.classList.toggle('active'));
-        note.addEventListener('mousedown', () => bringToFront(note), { capture: true });
-        const colors = Object.keys(HEX_TO_RGB);
-        const swatchesContainer = note.querySelector('.color-swatches');
-        colors.forEach(hexColor => {
-            const swatch = document.createElement('div');
-            swatch.classList.add('color-swatch');
-            swatch.style.backgroundColor = hexColor;
-            swatch.addEventListener('click', () => {
-                const currentAlpha = alphaSlider.value;
-                note.style.backgroundColor = `rgba(${HEX_TO_RGB[hexColor]}, ${currentAlpha})`;
-                saveThisNote();
-            });
-            swatchesContainer.appendChild(swatch);
-        });
-        alphaSlider.addEventListener('input', () => {
-            const [r, g, b] = getRgba(note.style.backgroundColor);
-            note.style.backgroundColor = `rgba(${r}, ${g}, ${b}, ${alphaSlider.value})`;
-            saveThisNote();
-        });
-        note.addEventListener('mouseup', saveThisNote);
-        notesContainer.appendChild(note);
-        updateTitle();
-        return note;
-    }
-    function makeDraggable(element, handle, onDragEnd) {
-        let isDragging = false;
-        let offsetX, offsetY;
-        handle.addEventListener('mousedown', (e) => { isDragging = true; offsetX = e.clientX - element.offsetLeft; offsetY = e.clientY - element.offsetTop; document.body.style.userSelect = 'none'; });
-        document.addEventListener('mousemove', (e) => { 
-            if (isDragging) {
-                element.style.left = `${e.clientX - offsetX}px`;
-                element.style.top = `${e.clientY - offsetY}px`;
-                if (noteDock.classList.contains('active') && e.clientX < noteDock.offsetWidth) {
-                    noteDock.classList.add('hover');
-                } else {
-                    noteDock.classList.remove('hover');
-                }
-            }
-        });
-        document.addEventListener('mouseup', (e) => {
-            if (isDragging) {
-                isDragging = false;
-                document.body.style.userSelect = 'auto';
-                if (noteDock.classList.contains('active') && e.clientX < noteDock.offsetWidth) {
-                    const notes = getAllNotes();
-                    const noteIndex = notes.findIndex(n => n.id === element.id);
-                    if (noteIndex !== -1) {
-                        notes[noteIndex].isDocked = true;
-                        saveAllNotes(notes);
-                        loadUI();
-                    }
-                } else {
-                    onDragEnd();
-                }
-                noteDock.classList.remove('hover');
-            }
-        });
-    }
-    
-    addNoteBtn.addEventListener('click', () => {
-        highestZ++;
-        createNote({ zIndex: highestZ });
-    });
-    
-    dockAllBtn.addEventListener('click', () => {
-        const notes = getAllNotes();
-        notes.forEach(note => note.isDocked = true);
-        saveAllNotes(notes);
-        loadUI();
-    });
-
+    // --- Initial Setup ---
     function init() {
+        dockToggleBtn.addEventListener('click', () => noteDock.classList.toggle('active'));
         updateTime();
         updateDate();
         updateGreeting();
