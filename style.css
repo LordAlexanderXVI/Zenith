@@ -40,6 +40,8 @@ main {
     transform: translateX(-100%);
     transition: transform 0.4s ease-in-out, box-shadow 0.3s ease;
     border-right: 1px solid rgba(255, 255, 255, 0.2);
+    display: flex; /* Use flexbox for layout */
+    flex-direction: column;
 }
 #note-dock.active { transform: translateX(0); }
 #note-dock.hover {
@@ -61,9 +63,38 @@ main {
     font-size: 1rem;
     border-left: none;
 }
-#dock-content { padding: 1rem; color: white; }
-#dock-content h2 { text-align: center; margin-bottom: 1rem; font-weight: 400; }
-#dock-list { list-style: none; padding: 0; }
+#dock-content {
+    padding: 1rem;
+    color: white;
+    display: flex;
+    flex-direction: column;
+    height: 100%; /* Make content fill the dock */
+}
+#dock-content h2 { text-align: center; margin-bottom: 1rem; font-weight: 400; flex-shrink: 0; }
+#dock-list {
+    list-style: none;
+    padding: 0;
+    flex-grow: 1; /* Allow list to grow and fill space */
+    overflow-y: auto; /* <<< THIS ADDS THE SCROLLBAR WHEN NEEDED */
+    padding-right: 5px; /* Add space for scrollbar */
+}
+
+/* NEW: Custom Scrollbar Styles */
+#dock-list::-webkit-scrollbar {
+    width: 8px;
+}
+#dock-list::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+}
+#dock-list::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 4px;
+}
+#dock-list::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.5);
+}
+
 .docked-note-item {
     background-color: rgba(255, 255, 255, 0.1);
     padding: 0.5rem;
@@ -73,6 +104,10 @@ main {
     justify-content: space-between;
     align-items: center;
     cursor: grab;
+    transition: background-color 0.2s ease; /* Hover effect */
+}
+.docked-note-item:hover {
+    background-color: rgba(255, 255, 255, 0.2);
 }
 .docked-note-item:active { cursor: grabbing; }
 .docked-note-delete-btn { background: none; border: none; color: #ff8a8a; cursor: pointer; }
@@ -122,6 +157,7 @@ main {
     z-index: 2;
 }
 
+/* (The rest of the note styles remain the same) */
 .note-header { width: 100%; height: 25px; background-color: rgba(0,0,0,0.1); display: flex; justify-content: space-between; align-items: center; padding: 0 5px; cursor: move; flex-shrink: 0; }
 .note-title { font-size: 0.9rem; color: #333; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .note-controls button { background: none; border: none; color: #333; cursor: pointer; font-size: 0.9rem; margin-left: 5px; opacity: 0.7; transition: opacity 0.2s; }
