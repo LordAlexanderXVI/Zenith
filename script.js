@@ -14,7 +14,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     dockToggleBtn.addEventListener('click', () => noteDock.classList.toggle('active'));
 
-    function setBackgroundImage() { /* ... same as before ... */
+    // THIS FUNCTION IS NOW FULLY RESTORED
+    function setBackgroundImage() {
         const apiKey = '6LTNce4u8PGdcfFJljsRPPcb2Q-0oyea8b9FKC66BrQ';
         const today = new Date().toISOString().slice(0, 10);
         const savedImage = JSON.parse(localStorage.getItem('backgroundImage'));
@@ -31,16 +32,17 @@ document.addEventListener('DOMContentLoaded', () => {
             }).catch(error => console.error('Error fetching Unsplash image:', error));
         }
     }
-    function updateTime() { /* ... same as before ... */
+    
+    function updateTime() {
         const now = new Date();
         timeElement.textContent = now.toLocaleTimeString('en-NZ', { hour12: true });
     }
-    function updateDate() { /* ... same as before ... */
+    function updateDate() {
         const now = new Date();
         const options = { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' };
         dateElement.textContent = new Intl.DateTimeFormat('en-NZ', options).format(now);
     }
-    function updateGreeting() { /* ... same as before ... */
+    function updateGreeting() {
         const hour = new Date().getHours();
         if (hour < 12) greetingElement.textContent = 'Good morning.';
         else if (hour < 18) greetingElement.textContent = 'Good afternoon.';
@@ -64,15 +66,13 @@ document.addEventListener('DOMContentLoaded', () => {
             deleteBtn.className = 'docked-note-delete-btn';
             deleteBtn.innerHTML = '<i class="fa-solid fa-trash-can"></i>';
             
-            // Event listener for deleting from dock
             deleteBtn.addEventListener('click', (e) => {
-                e.stopPropagation(); // Prevent drag from starting
+                e.stopPropagation();
                 const notes = getAllNotes().filter(n => n.id !== noteData.id);
                 saveAllNotes(notes);
                 loadUI();
             });
 
-            // Event listener for starting an undock drag
             li.addEventListener('mousedown', (e) => undockNote(noteData.id, e));
 
             li.appendChild(titleSpan);
@@ -81,7 +81,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
     
-    // NEW: Function to undock a note and immediately start dragging it
     function undockNote(noteId, initialEvent) {
         const notes = getAllNotes();
         const noteIndex = notes.findIndex(n => n.id === noteId);
@@ -92,7 +91,6 @@ document.addEventListener('DOMContentLoaded', () => {
         
         const newNoteElement = createNote(notes[noteIndex]);
         
-        // Simulate a mousedown on the new note's header to start dragging instantly
         const header = newNoteElement.querySelector('.note-header');
         const fakeEvent = new MouseEvent('mousedown', {
             bubbles: true,
@@ -105,7 +103,6 @@ document.addEventListener('DOMContentLoaded', () => {
         loadUI();
     }
 
-    // This function now re-renders both the notes and the dock
     function loadUI() {
         notesContainer.innerHTML = '';
         const notes = getAllNotes();
@@ -115,7 +112,7 @@ document.addEventListener('DOMContentLoaded', () => {
         renderDock();
     }
     
-    const bringToFront = (note) => { /* ... same as before ... */
+    const bringToFront = (note) => {
         highestZ++;
         note.style.zIndex = highestZ;
         const notes = getAllNotes();
@@ -201,7 +198,6 @@ document.addEventListener('DOMContentLoaded', () => {
             if (isDragging) {
                 element.style.left = `${e.clientX - offsetX}px`;
                 element.style.top = `${e.clientY - offsetY}px`;
-                // NEW: Check if dragging over the dock
                 if (noteDock.classList.contains('active') && e.clientX < noteDock.offsetWidth) {
                     noteDock.classList.add('hover');
                 } else {
@@ -213,7 +209,6 @@ document.addEventListener('DOMContentLoaded', () => {
             if (isDragging) {
                 isDragging = false;
                 document.body.style.userSelect = 'auto';
-                // NEW: Check for drop inside the dock
                 if (noteDock.classList.contains('active') && e.clientX < noteDock.offsetWidth) {
                     const notes = getAllNotes();
                     const noteIndex = notes.findIndex(n => n.id === element.id);
@@ -248,7 +243,7 @@ document.addEventListener('DOMContentLoaded', () => {
         updateGreeting();
         setBackgroundImage();
         setInterval(updateTime, 1000);
-        loadUI(); // Replaced loadNotes() with loadUI()
+        loadUI();
     }
     init();
 });
