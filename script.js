@@ -1,27 +1,20 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // --- Global Variables ---
     let highestZ = 2;
     const HEX_TO_RGB = { '#ffc': '255,255,204', '#cfc': '204,255,204', '#ccf': '204,204,255', '#fcc': '255,204,204', '#cff': '204,255,255', '#fcf': '255,204,255' };
 
-    // --- Dashboard Elements ---
     const timeElement = document.getElementById('time');
     const dateElement = document.getElementById('date');
     const greetingElement = document.getElementById('greeting');
     const addNoteBtn = document.getElementById('add-note-btn');
     const notesContainer = document.getElementById('notes-container');
-
-    // --- NEW: Dock Elements ---
     const noteDock = document.getElementById('note-dock');
     const dockToggleBtn = document.getElementById('dock-toggle-btn');
+    const dockList = document.getElementById('dock-list');
+    const dockAllBtn = document.getElementById('dock-all-btn');
 
-    // --- NEW: Dock Functionality ---
-    dockToggleBtn.addEventListener('click', () => {
-        noteDock.classList.toggle('active');
-    });
+    dockToggleBtn.addEventListener('click', () => noteDock.classList.toggle('active'));
 
-    // --- Dashboard Functions ---
-    // (These functions remain the same)
-    function setBackgroundImage() {
+    function setBackgroundImage() { /* ... same as before ... */
         const apiKey = '6LTNce4u8PGdcfFJljsRPPcb2Q-0oyea8b9FKC66BrQ';
         const today = new Date().toISOString().slice(0, 10);
         const savedImage = JSON.parse(localStorage.getItem('backgroundImage'));
@@ -38,43 +31,101 @@ document.addEventListener('DOMContentLoaded', () => {
             }).catch(error => console.error('Error fetching Unsplash image:', error));
         }
     }
-    function updateTime() {
+    function updateTime() { /* ... same as before ... */
         const now = new Date();
         timeElement.textContent = now.toLocaleTimeString('en-NZ', { hour12: true });
     }
-    function updateDate() {
+    function updateDate() { /* ... same as before ... */
         const now = new Date();
         const options = { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' };
         dateElement.textContent = new Intl.DateTimeFormat('en-NZ', options).format(now);
     }
-    function updateGreeting() {
+    function updateGreeting() { /* ... same as before ... */
         const hour = new Date().getHours();
         if (hour < 12) greetingElement.textContent = 'Good morning.';
         else if (hour < 18) greetingElement.textContent = 'Good afternoon.';
         else greetingElement.textContent = 'Good evening.';
     }
 
-    // --- Sticky Note Functions ---
-    // (All sticky note functions remain the same for now)
-    function saveNotes() {
-        const notes = [];
-        document.querySelectorAll('.sticky-note').forEach(note => {
-            notes.push({ id: note.id, left: note.style.left, top: note.style.top, width: note.style.width, height: note.style.height, content: note.querySelector('.note-content').innerHTML, isMinimized: note.classList.contains('minimized'), color: note.style.backgroundColor, zIndex: note.style.zIndex });
+    function getAllNotes() { return JSON.parse(localStorage.getItem('stickyNotes')) || []; }
+    function saveAllNotes(notes) { localStorage.setItem('stickyNotes', JSON.stringify(notes)); }
+
+    function renderDock() {
+        const notes = getAllNotes();
+        dockList.innerHTML = '';
+        notes.filter(note => note.isDocked).forEach(noteData => {
+            const li = document.createElement('li');
+            li.className = 'docked-note-item';
+            li.dataset.noteId = noteData.id;
+            const titleSpan = document.createElement('span');
+            const firstLine = new DOMParser().parseFromString(noteData.content, 'text/html').body.innerText.split('\n')[0];
+            titleSpan.textContent = firstLine.substring(0, 20) || 'New Note';
+            const deleteBtn = document.createElement('button');
+            deleteBtn.className = 'docked-note-delete-btn';
+            deleteBtn.innerHTML = '<i class="fa-solid fa-trash-can"></i>';
+            
+            // Event listener for deleting from dock
+            deleteBtn.addEventListener('click', (e) => {
+                e.stopPropagation(); // Prevent drag from starting
+                const notes = getAllNotes().filter(n => n.id !== noteData.id);
+                saveAllNotes(notes);
+                loadUI();
+            });
+
+            // Event listener for starting an undock drag
+            li.addEventListener('mousedown', (e) => undockNote(noteData.id, e));
+
+            li.appendChild(titleSpan);
+            li.appendChild(deleteBtn);
+            dockList.appendChild(li);
         });
-        localStorage.setItem('stickyNotes', JSON.stringify(notes));
     }
-    function loadNotes() {
-        const notes = JSON.parse(localStorage.getItem('stickyNotes')) || [];
+    
+    // NEW: Function to undock a note and immediately start dragging it
+    function undockNote(noteId, initialEvent) {
+        const notes = getAllNotes();
+        const noteIndex = notes.findIndex(n => n.id === noteId);
+        if (noteIndex === -1) return;
+        
+        notes[noteIndex].isDocked = false;
+        saveAllNotes(notes);
+        
+        const newNoteElement = createNote(notes[noteIndex]);
+        
+        // Simulate a mousedown on the new note's header to start dragging instantly
+        const header = newNoteElement.querySelector('.note-header');
+        const fakeEvent = new MouseEvent('mousedown', {
+            bubbles: true,
+            cancelable: true,
+            clientX: initialEvent.clientX,
+            clientY: initialEvent.clientY
+        });
+        header.dispatchEvent(fakeEvent);
+        
+        loadUI();
+    }
+
+    // This function now re-renders both the notes and the dock
+    function loadUI() {
+        notesContainer.innerHTML = '';
+        const notes = getAllNotes();
         const maxZ = notes.reduce((max, note) => Math.max(max, parseInt(note.zIndex) || 2), 2);
         highestZ = maxZ;
-        notes.sort((a, b) => (parseInt(a.zIndex) || 2) - (parseInt(b.zIndex) || 2));
-        notes.forEach(noteData => createNote(noteData));
+        notes.filter(note => !note.isDocked).sort((a, b) => (parseInt(a.zIndex) || 2) - (parseInt(b.zIndex) || 2)).forEach(noteData => createNote(noteData));
+        renderDock();
     }
-    const bringToFront = (note) => {
+    
+    const bringToFront = (note) => { /* ... same as before ... */
         highestZ++;
         note.style.zIndex = highestZ;
-        saveNotes();
+        const notes = getAllNotes();
+        const noteIndex = notes.findIndex(n => n.id === note.id);
+        if (noteIndex !== -1) {
+            notes[noteIndex].zIndex = highestZ;
+            saveAllNotes(notes);
+        }
     };
+    
     function createNote(data = {}) {
         const note = document.createElement('div');
         note.classList.add('sticky-note');
@@ -102,11 +153,22 @@ document.addEventListener('DOMContentLoaded', () => {
             const firstLine = content.innerText.split('\n')[0];
             title.textContent = firstLine.substring(0, 20) || 'New Note';
         };
-        content.addEventListener('blur', () => { updateTitle(); saveNotes(); });
-        makeDraggable(note, header);
-        closeBtn.addEventListener('click', () => { notesContainer.removeChild(note); saveNotes(); });
-        minimizeBtn.addEventListener('click', () => { note.classList.toggle('minimized'); saveNotes(); });
-        settingsBtn.addEventListener('click', () => { settingsPanel.classList.toggle('active'); });
+        const saveThisNote = () => {
+            const notes = getAllNotes();
+            const noteIndex = notes.findIndex(n => n.id === note.id);
+            const noteData = { id: note.id, left: note.style.left, top: note.style.top, width: note.style.width, height: note.style.height, content: content.innerHTML, isMinimized: note.classList.contains('minimized'), color: note.style.backgroundColor, zIndex: note.style.zIndex, isDocked: false };
+            if (noteIndex !== -1) { notes[noteIndex] = noteData; } else { notes.push(noteData); }
+            saveAllNotes(notes);
+        };
+        content.addEventListener('blur', () => { updateTitle(); saveThisNote(); });
+        makeDraggable(note, header, saveThisNote);
+        closeBtn.addEventListener('click', () => {
+            notesContainer.removeChild(note);
+            const notes = getAllNotes().filter(n => n.id !== note.id);
+            saveAllNotes(notes);
+        });
+        minimizeBtn.addEventListener('click', () => { note.classList.toggle('minimized'); saveThisNote(); });
+        settingsBtn.addEventListener('click', () => settingsPanel.classList.toggle('active'));
         note.addEventListener('mousedown', () => bringToFront(note), { capture: true });
         const colors = Object.keys(HEX_TO_RGB);
         const swatchesContainer = note.querySelector('.color-swatches');
@@ -117,37 +179,76 @@ document.addEventListener('DOMContentLoaded', () => {
             swatch.addEventListener('click', () => {
                 const currentAlpha = alphaSlider.value;
                 note.style.backgroundColor = `rgba(${HEX_TO_RGB[hexColor]}, ${currentAlpha})`;
-                saveNotes();
+                saveThisNote();
             });
             swatchesContainer.appendChild(swatch);
         });
         alphaSlider.addEventListener('input', () => {
             const [r, g, b] = getRgba(note.style.backgroundColor);
             note.style.backgroundColor = `rgba(${r}, ${g}, ${b}, ${alphaSlider.value})`;
-            saveNotes();
+            saveThisNote();
         });
-        note.addEventListener('mouseup', saveNotes);
+        note.addEventListener('mouseup', saveThisNote);
         notesContainer.appendChild(note);
         updateTitle();
+        return note;
     }
-    function makeDraggable(element, handle) {
+    function makeDraggable(element, handle, onDragEnd) {
         let isDragging = false;
         let offsetX, offsetY;
         handle.addEventListener('mousedown', (e) => { isDragging = true; offsetX = e.clientX - element.offsetLeft; offsetY = e.clientY - element.offsetTop; document.body.style.userSelect = 'none'; });
-        document.addEventListener('mousemove', (e) => { if (isDragging) { element.style.left = `${e.clientX - offsetX}px`; element.style.top = `${e.clientY - offsetY}px`; } });
-        document.addEventListener('mouseup', () => { if (isDragging) { isDragging = false; document.body.style.userSelect = 'auto'; saveNotes(); } });
+        document.addEventListener('mousemove', (e) => { 
+            if (isDragging) {
+                element.style.left = `${e.clientX - offsetX}px`;
+                element.style.top = `${e.clientY - offsetY}px`;
+                // NEW: Check if dragging over the dock
+                if (noteDock.classList.contains('active') && e.clientX < noteDock.offsetWidth) {
+                    noteDock.classList.add('hover');
+                } else {
+                    noteDock.classList.remove('hover');
+                }
+            }
+        });
+        document.addEventListener('mouseup', (e) => {
+            if (isDragging) {
+                isDragging = false;
+                document.body.style.userSelect = 'auto';
+                // NEW: Check for drop inside the dock
+                if (noteDock.classList.contains('active') && e.clientX < noteDock.offsetWidth) {
+                    const notes = getAllNotes();
+                    const noteIndex = notes.findIndex(n => n.id === element.id);
+                    if (noteIndex !== -1) {
+                        notes[noteIndex].isDocked = true;
+                        saveAllNotes(notes);
+                        loadUI();
+                    }
+                } else {
+                    onDragEnd();
+                }
+                noteDock.classList.remove('hover');
+            }
+        });
     }
-    addNoteBtn.addEventListener('click', () => { highestZ++; createNote({ zIndex: highestZ }); });
+    
+    addNoteBtn.addEventListener('click', () => {
+        highestZ++;
+        createNote({ zIndex: highestZ });
+    });
+    
+    dockAllBtn.addEventListener('click', () => {
+        const notes = getAllNotes();
+        notes.forEach(note => note.isDocked = true);
+        saveAllNotes(notes);
+        loadUI();
+    });
 
-    // --- Initial Application Setup ---
     function init() {
         updateTime();
         updateDate();
         updateGreeting();
         setBackgroundImage();
         setInterval(updateTime, 1000);
-        loadNotes();
+        loadUI(); // Replaced loadNotes() with loadUI()
     }
-
     init();
 });
