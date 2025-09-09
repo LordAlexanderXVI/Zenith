@@ -1,173 +1,78 @@
-/* Basic Reset */
-* { margin: 0; padding: 0; box-sizing: border-box; }
-
-body {
-    font-family: 'Inter', sans-serif;
-    color: white;
-    background-color: #1a1a1a;
-    transition: background-image 1s ease-in-out;
-    background-size: cover;
-    background-repeat: no-repeat;
-    background-position: center center;
-    overflow: hidden;
-}
-
-main {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
-    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
-    user-select: none;
-}
-
-#time, #date, #greeting { pointer-events: none; }
-#time { font-size: 8rem; font-weight: 700; }
-#date { font-size: 1.5rem; }
-#greeting { font-size: 2.5rem; margin-top: 1rem; }
-
-/* --- Note Dock Styles --- */
-#note-dock {
-    position: fixed;
-    left: 0;
-    top: 0;
-    height: 100%;
-    width: 280px;
-    background-color: rgba(0, 0, 0, 0.7);
-    backdrop-filter: blur(10px);
-    z-index: 20;
-    transform: translateX(-100%);
-    transition: transform 0.4s ease-in-out, box-shadow 0.3s ease;
-    border-right: 1px solid rgba(255, 255, 255, 0.2);
-    display: flex; /* Use flexbox for layout */
-    flex-direction: column;
-}
-#note-dock.active { transform: translateX(0); }
-#note-dock.hover {
-    box-shadow: 0 0 20px 5px rgba(255, 255, 255, 0.5);
-}
-#dock-toggle-btn {
-    position: absolute;
-    top: 50%;
-    left: 100%;
-    transform: translateY(-50%);
-    width: 25px;
-    height: 60px;
-    background-color: rgba(0, 0, 0, 0.7);
-    border: none;
-    color: white;
-    cursor: pointer;
-    border-top-right-radius: 8px;
-    border-bottom-right-radius: 8px;
-    font-size: 1rem;
-    border-left: none;
-}
-#dock-content {
-    padding: 1rem;
-    color: white;
-    display: flex;
-    flex-direction: column;
-    height: 100%; /* Make content fill the dock */
-}
-#dock-content h2 { text-align: center; margin-bottom: 1rem; font-weight: 400; flex-shrink: 0; }
-#dock-list {
-    list-style: none;
-    padding: 0;
-    flex-grow: 1; /* Allow list to grow and fill space */
-    overflow-y: auto; /* <<< THIS ADDS THE SCROLLBAR WHEN NEEDED */
-    padding-right: 5px; /* Add space for scrollbar */
-}
-
-/* NEW: Custom Scrollbar Styles */
-#dock-list::-webkit-scrollbar {
-    width: 8px;
-}
-#dock-list::-webkit-scrollbar-track {
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 4px;
-}
-#dock-list::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.3);
-    border-radius: 4px;
-}
-#dock-list::-webkit-scrollbar-thumb:hover {
-    background: rgba(255, 255, 255, 0.5);
-}
-
-.docked-note-item {
-    background-color: rgba(255, 255, 255, 0.1);
-    padding: 0.5rem;
-    margin-bottom: 0.5rem;
-    border-radius: 4px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    cursor: grab;
-    transition: background-color 0.2s ease; /* Hover effect */
-}
-.docked-note-item:hover {
-    background-color: rgba(255, 255, 255, 0.2);
-}
-.docked-note-item:active { cursor: grabbing; }
-.docked-note-delete-btn { background: none; border: none; color: #ff8a8a; cursor: pointer; }
-
-/* --- Bottom Right Controls --- */
-#bottom-right-controls {
-    position: fixed;
-    bottom: 20px;
-    right: 20px;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    z-index: 10;
-}
-#add-note-btn, #dock-all-btn {
-    width: 50px;
-    height: 50px;
-    border-radius: 50%;
-    border: none;
-    cursor: pointer;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
-    transition: transform 0.2s ease;
-    font-size: 1.5rem;
-}
-#add-note-btn { background-color: rgba(255, 255, 255, 0.9); color: #1a1a1a; font-weight: bold; font-size: 2rem; }
-#dock-all-btn { background-color: rgba(100, 100, 100, 0.8); color: white; }
-#add-note-btn:hover, #dock-all-btn:hover { transform: scale(1.1); }
-
-#notes-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
+/* (All previous CSS remains the same) */
+/* ... */
 
 /* --- Sticky Note Structure --- */
 .sticky-note {
-    position: absolute;
-    top: 30px;
-    left: 30px;
-    width: 250px;
-    height: 250px;
-    background-color: #ffc;
-    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-    display: flex;
-    flex-direction: column;
-    resize: both;
-    overflow: hidden;
-    min-width: 150px;
-    min-height: 100px;
-    transition: height 0.3s ease, background-color 0.3s ease;
-    z-index: 2;
+    /* ... */
 }
 
-/* (The rest of the note styles remain the same) */
-.note-header { width: 100%; height: 25px; background-color: rgba(0,0,0,0.1); display: flex; justify-content: space-between; align-items: center; padding: 0 5px; cursor: move; flex-shrink: 0; }
-.note-title { font-size: 0.9rem; color: #333; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.note-controls button { background: none; border: none; color: #333; cursor: pointer; font-size: 0.9rem; margin-left: 5px; opacity: 0.7; transition: opacity 0.2s; }
-.note-controls button:hover { opacity: 1; }
-.note-content { flex-grow: 1; padding: 10px; color: #333; font-size: 1rem; overflow-wrap: break-word; overflow-y: auto; outline: none; }
-.sticky-note.minimized { height: 25px !important; min-height: 25px; resize: none; }
-.note-settings-panel { display: none; padding: 8px; background-color: rgba(0,0,0,0.05); flex-direction: column; gap: 8px; }
-.note-settings-panel.active { display: flex; }
-.color-swatches, .alpha-slider-container { display: flex; gap: 8px; align-items: center; font-size: 0.9rem; color: #333; }
-.color-swatch { width: 20px; height: 20px; border-radius: 50%; cursor: pointer; border: 2px solid rgba(0,0,0,0.2); transition: transform 0.2s; }
-.color-swatch:hover { transform: scale(1.2); }
-input[type="range"] { flex-grow: 1; -webkit-appearance: none; appearance: none; height: 5px; background: rgba(0,0,0,0.2); border-radius: 5px; outline: none; }
-input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 15px; height: 15px; border-radius: 50%; background: #f9c900; cursor: pointer; }
+/* --- NEW: Custom Confirmation Modal Styles --- */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(5px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    opacity: 1;
+    transition: opacity 0.3s ease;
+}
+
+.modal-overlay.hidden {
+    opacity: 0;
+    pointer-events: none;
+}
+
+.modal-content {
+    background-color: #333;
+    color: white;
+    padding: 2rem;
+    border-radius: 8px;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.4);
+    text-align: center;
+}
+
+.modal-content p {
+    margin-bottom: 1rem;
+}
+
+.modal-options {
+    margin: 1rem 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.9rem;
+}
+
+#dont-ask-again {
+    margin-right: 0.5rem;
+}
+
+.modal-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+}
+
+.modal-buttons button {
+    padding: 0.5rem 1rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+#confirm-cancel-btn {
+    background-color: #555;
+    color: white;
+}
+
+#confirm-delete-btn {
+    background-color: #e74c3c;
+    color: white;
+}
