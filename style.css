@@ -1,9 +1,5 @@
 /* Basic Reset */
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
+* { margin: 0; padding: 0; box-sizing: border-box; }
 
 body {
     font-family: 'Inter', sans-serif;
@@ -26,15 +22,12 @@ main {
     user-select: none;
 }
 
-#time, #date, #greeting {
-    pointer-events: none;
-}
-
+#time, #date, #greeting { pointer-events: none; }
 #time { font-size: 8rem; font-weight: 700; }
 #date { font-size: 1.5rem; }
 #greeting { font-size: 2.5rem; margin-top: 1rem; }
 
-/* --- NEW: Note Dock Styles --- */
+/* --- Note Dock Styles --- */
 #note-dock {
     position: fixed;
     left: 0;
@@ -44,19 +37,19 @@ main {
     background-color: rgba(0, 0, 0, 0.7);
     backdrop-filter: blur(10px);
     z-index: 20;
-    transform: translateX(-100%); /* Start hidden off-screen */
-    transition: transform 0.4s ease-in-out;
+    transform: translateX(-100%);
+    transition: transform 0.4s ease-in-out, box-shadow 0.3s ease; /* Added box-shadow transition */
     border-right: 1px solid rgba(255, 255, 255, 0.2);
 }
-
-#note-dock.active {
-    transform: translateX(0); /* Slide in */
+#note-dock.active { transform: translateX(0); }
+/* NEW: Hover effect for dropping notes */
+#note-dock.hover {
+    box-shadow: 0 0 20px 5px rgba(255, 255, 255, 0.5);
 }
-
 #dock-toggle-btn {
     position: absolute;
     top: 50%;
-    left: 100%; /* Position just outside the dock */
+    left: 100%;
     transform: translateY(-50%);
     width: 25px;
     height: 60px;
@@ -69,50 +62,47 @@ main {
     font-size: 1rem;
     border-left: none;
 }
-
-#dock-content {
-    padding: 1rem;
-    color: white;
+#dock-content { padding: 1rem; color: white; }
+#dock-content h2 { text-align: center; margin-bottom: 1rem; font-weight: 400; }
+#dock-list { list-style: none; padding: 0; }
+.docked-note-item {
+    background-color: rgba(255, 255, 255, 0.1);
+    padding: 0.5rem;
+    margin-bottom: 0.5rem;
+    border-radius: 4px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: grab;
 }
+.docked-note-item:active { cursor: grabbing; }
+.docked-note-delete-btn { background: none; border: none; color: #ff8a8a; cursor: pointer; }
 
-#dock-content h2 {
-    text-align: center;
-    margin-bottom: 1rem;
-    font-weight: 400;
-}
-
-#dock-list {
-    list-style: none;
-    padding: 0;
-}
-
-#add-note-btn {
+/* --- Bottom Right Controls --- */
+#bottom-right-controls {
     position: fixed;
     bottom: 20px;
     right: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    z-index: 10;
+}
+#add-note-btn, #dock-all-btn {
     width: 50px;
     height: 50px;
     border-radius: 50%;
-    background-color: rgba(255, 255, 255, 0.9);
-    color: #1a1a1a;
     border: none;
-    font-size: 2rem;
-    font-weight: bold;
     cursor: pointer;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
     transition: transform 0.2s ease;
-    z-index: 10;
+    font-size: 1.5rem;
 }
+#add-note-btn { background-color: rgba(255, 255, 255, 0.9); color: #1a1a1a; font-weight: bold; font-size: 2rem; }
+#dock-all-btn { background-color: rgba(100, 100, 100, 0.8); color: white; }
+#add-note-btn:hover, #dock-all-btn:hover { transform: scale(1.1); }
 
-#add-note-btn:hover { transform: scale(1.1); }
-
-#notes-container {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-}
+#notes-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
 
 /* --- Sticky Note Structure --- */
 .sticky-note {
