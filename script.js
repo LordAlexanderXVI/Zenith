@@ -90,7 +90,6 @@ document.addEventListener('DOMContentLoaded', () => {
         notes[noteIndex].isDocked = false;
         saveAllNotes(notes);
         
-        // Before creating the new note, remove the list item from the dock
         const listItem = dockList.querySelector(`[data-note-id="${noteId}"]`);
         if (listItem) {
             dockList.removeChild(listItem);
@@ -158,7 +157,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const saveThisNote = () => {
             const notes = getAllNotes();
             let noteIndex = notes.findIndex(n => n.id === note.id);
-            if (noteIndex === -1) { // If it's a new note, add it
+            if (noteIndex === -1) {
                 notes.push({});
                 noteIndex = notes.length - 1;
             }
